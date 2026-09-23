@@ -1899,7 +1899,12 @@ void CWeaponCSBase::DrawCrosshair()
 
 	if ( pPlayer->HasShield() && pPlayer->IsShieldDrawn() == true )
 		return;
+	// Mac uses this VGUI crosshair for unscoped sniper rifles too.
+#if defined( OSX )
+	if ( GetWeaponType() == WEAPONTYPE_SNIPER_RIFLE && pPlayer->m_bIsScoped )
+#else
 	if ( GetWeaponType() == WEAPONTYPE_SNIPER_RIFLE && !weapon_debug_spread_show.GetBool() )
+#endif
 	{
 		return;
 	}
