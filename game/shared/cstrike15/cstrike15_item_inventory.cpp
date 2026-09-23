@@ -249,7 +249,7 @@ void CCSInventoryManager::GenerateBaseItems( void )
 			pCriteria.iClass = iTeam;
 			pCriteria.iSlot = slot;
 			int iItemDef = CStrike15ItemSystem()->GenerateBaseItem( &pCriteria );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 			// The M4A1-S uses its own silenced model, sounds and weapon attributes.
 			// Make it the default CT rifle instead of applying a silencer to the M4A4.
 			if ( iTeam == TEAM_CT && slot == LOADOUT_POSITION_RIFLE1 &&

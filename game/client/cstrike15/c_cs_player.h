@@ -308,6 +308,10 @@ public:
 	bool IsInBuyPeriod();
 	bool CanBuyDuringImmunity();
 	bool CanPlayerBuy( bool display );
+#if defined( USE_MAC_PRESET )
+	// The Mac preset's perks apply only to the player hosting a local listen server.
+	bool IsLocalListenServerHost() const;
+#endif
 
 	bool CanShowTeamMenu() const;	// Returns true if we're allowed to show the team menu right now.
 
@@ -601,7 +605,9 @@ public:
 	// Global/static methods
 	virtual void ThirdPersonSwitch( bool bThirdperson );
 	virtual void CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, float &zFar, float &fov );
+#if defined( USE_MAC_PRESET )
 	virtual void CalcViewModelView( const Vector &eyeOrigin, const QAngle &eyeAngles );
+#endif
 
 public:
 
@@ -686,7 +692,9 @@ public:
 	CNetworkVar( float, m_flProgressBarStartTime );
 
 	CNetworkVar( float, m_flStamina );
+#if defined( USE_MAC_PRESET )
 	CNetworkVar( float, m_flLeanAngle );
+#endif
 	CNetworkVar( int, m_iDirection );	// The current lateral kicking direction; 1 = right,  0 = left
 	CNetworkVar( int, m_iShotsFired );	// number of shots fired recently
 	CNetworkVar( int, m_nNumFastDucks ); // UNUSED.  Kept for backwards demo compatibility.  $$$REI TODO: Investigate safely removing variables

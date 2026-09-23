@@ -58,14 +58,14 @@ ConVar lookstrafe( "lookstrafe", "0", FCVAR_ARCHIVE );
 #define MAX_LINEAR_SPEED "450"
 #endif
 
-#if defined( OSX ) && !defined( PORTAL2 )
+#if defined( USE_MAC_PRESET ) && !defined( PORTAL2 )
 // AA applies 0.85 strafe and 0.8 backward input multipliers.
 ConVar cl_sidespeed( "cl_sidespeed", "382.5", FCVAR_CHEAT );
 #else
 ConVar cl_sidespeed( "cl_sidespeed", MAX_LINEAR_SPEED, FCVAR_CHEAT );
 #endif
 ConVar cl_forwardspeed( "cl_forwardspeed", MAX_LINEAR_SPEED, FCVAR_CHEAT );
-#if defined( OSX ) && !defined( PORTAL2 )
+#if defined( USE_MAC_PRESET ) && !defined( PORTAL2 )
 ConVar cl_backspeed( "cl_backspeed", "360", FCVAR_CHEAT );
 #else
 ConVar cl_backspeed( "cl_backspeed", MAX_LINEAR_SPEED, FCVAR_CHEAT );
@@ -503,7 +503,7 @@ void KeyUp( kbutton_t *b, const char *c )
 	data.state |= 4; 		// impulse up
 }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 static void SOCDKeyDown( kbutton_t *key, const char *keyCode, int *lastPressed, int direction )
 {
 	const bool wasDown = ( key->GetPerUser().state & 1 ) != 0;
@@ -554,7 +554,7 @@ void IN_RightDown( const CCommand &args ) {KeyDown(&in_right, args[1] );}
 void IN_RightUp( const CCommand &args ) {KeyUp(&in_right, args[1] );}
 void IN_ForwardDown( const CCommand &args )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	SOCDKeyDown( &in_forward, args[1], s_lastForwardBackPressed, 1 );
 #else
 	KeyDown( &in_forward, args[1] );
@@ -563,7 +563,7 @@ void IN_ForwardDown( const CCommand &args )
 void IN_ForwardUp( const CCommand &args ) {KeyUp(&in_forward, args[1] );}
 void IN_BackDown( const CCommand &args )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	SOCDKeyDown( &in_back, args[1], s_lastForwardBackPressed, -1 );
 #else
 	KeyDown( &in_back, args[1] );
@@ -576,7 +576,7 @@ void IN_LookdownDown( const CCommand &args ) {KeyDown(&in_lookdown, args[1] );}
 void IN_LookdownUp( const CCommand &args ) {KeyUp(&in_lookdown, args[1] );}
 void IN_MoveleftDown( const CCommand &args )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	SOCDKeyDown( &in_moveleft, args[1], s_lastLeftRightPressed, -1 );
 #else
 	KeyDown( &in_moveleft, args[1] );
@@ -585,7 +585,7 @@ void IN_MoveleftDown( const CCommand &args )
 void IN_MoveleftUp( const CCommand &args ) {KeyUp(&in_moveleft, args[1] );}
 void IN_MoverightDown( const CCommand &args )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	SOCDKeyDown( &in_moveright, args[1], s_lastLeftRightPressed, 1 );
 #else
 	KeyDown( &in_moveright, args[1] );
@@ -1098,7 +1098,7 @@ static float SOCDMovementKeyState( CInput *input, kbutton_t *key, kbutton_t *opp
 	int nSlot, int lastPressed, int direction )
 {
 	const float value = input->KeyState( key );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	if ( ( key->GetPerUser( nSlot ).state & 1 ) &&
 		( opposite->GetPerUser( nSlot ).state & 1 ) && lastPressed != direction )
 		return 0.0f;
@@ -1858,7 +1858,7 @@ int CInput::GetButtonBits( bool bResetState )
 	CalcButtonBits( nSlot, bits, IN_RIGHT, ignore, &in_right, bResetState );
 	CalcButtonBits( nSlot, bits, IN_MOVELEFT, ignore, &in_moveleft, bResetState );
 	CalcButtonBits( nSlot, bits, IN_MOVERIGHT, ignore, &in_moveright, bResetState );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Send only the winning direction to prediction and the server.
 	if ( ( in_forward.GetPerUser( nSlot ).state & 1 ) && ( in_back.GetPerUser( nSlot ).state & 1 ) )
 		bits &= ~( s_lastForwardBackPressed[ nSlot ] > 0 ? IN_BACK :
@@ -2051,7 +2051,7 @@ static ConCommand startalt1("+alt1", IN_Alt1Down);
 static ConCommand endalt1("-alt1", IN_Alt1Up);
 static ConCommand startalt2("+alt2", IN_Alt2Down);
 static ConCommand endalt2("-alt2", IN_Alt2Up);
-#if defined( CSTRIKE15 )
+#if defined( USE_MAC_PRESET ) && defined( CSTRIKE15 )
 static ConCommand startleanleft("+leanleft", IN_Alt1Down);
 static ConCommand endleanleft("-leanleft", IN_Alt1Up);
 static ConCommand startleanright("+leanright", IN_Alt2Down);

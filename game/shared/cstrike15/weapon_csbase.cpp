@@ -17,6 +17,11 @@
 #include "inputsystem/iinputsystem.h"
 
 
+// CS-PRO TEST CHANGE: instant movement inaccuracy, curve exponent x^0.25
+#define MOVEMENT_ACCURACY_DECAYED	0
+#define MOVEMENT_WALK_CURVE01_EXPONENT   0.85
+#define MOVEMENT_CURVE01_EXPONENT   0.25
+
 #define SILENCER_VISIBLE 0
 #define SILENCER_HIDDEN 1
 
@@ -90,7 +95,7 @@ ConVar weapon_accuracy_nospread( "weapon_accuracy_nospread", "0", FCVAR_RELEASE 
 ConVar weapon_recoil_cooldown( "weapon_recoil_cooldown", "0.55", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "DEPRECATED. Recoil now decays using weapon_recoil_decay_coefficient");
 ConVar weapon_recoil_scale( "weapon_recoil_scale", "2.0", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Overall scale factor for recoil. Used to reduce recoil on specific platforms");
 ConVar weapon_recoil_scale_motion_controller( "weapon_recoil_scale_motion_controller", "1.0", FCVAR_RELEASE | FCVAR_CHEAT |FCVAR_REPLICATED, "Overall scale factor for recoil. Used to reduce recoil.  Only for motion controllers");
-ConVar weapon_air_spread_scale( "weapon_air_spread_scale", "1.0", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Legacy setting; movement no longer changes weapon inaccuracy", true, 0.0f, false, 1.0f );
+ConVar weapon_air_spread_scale( "weapon_air_spread_scale", "1.0", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Scale factor for jumping inaccuracy, set to 0 to make jumping accuracy equal to standing", true, 0.0f, false, 1.0f );
 
 ConVar weapon_legacy_recoiltable( "weapon_legacy_recoiltable", "0", FCVAR_REPLICATED | FCVAR_DEVELOPMENTONLY );
 ConVar weapon_reticle_knife_show( "weapon_reticle_knife_show", "0", FCVAR_RELEASE | FCVAR_REPLICATED, "When enabled will show knife reticle on clients. Used for game modes requiring target id display when holding a knife." );
@@ -942,7 +947,7 @@ void CWeaponCSBase::ItemPostFrame()
 		ItemPostFrame_ProcessPrimaryAttack( pPlayer );
 	}
 	else if ( ( pPlayer->m_nButtons & IN_ZOOM ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime )
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		&& GetCSWeaponID() != WEAPON_AWP
 #endif
 		)
@@ -951,7 +956,7 @@ void CWeaponCSBase::ItemPostFrame()
 			pPlayer->m_nButtons &= ~IN_ZOOM;
 	}
 	else if ( (pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime )
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		&& GetCSWeaponID() != WEAPON_AWP
 #endif
 		)
@@ -1219,12 +1224,77 @@ float CWeaponCSBase::GetInaccuracy() const
 	if ( weapon_accuracy_nospread.GetBool() )
 		return 0.0f;
 
+#if defined( USE_MAC_PRESET )
 	// Every shot uses the weapon's fresh-shot accuracy.  Firing, moving, and
 	// jumping cannot accumulate a wider spray cone.
 	const CCSWeaponInfo &weaponInfo = GetCSWpnData();
 	float fAccuracy = FBitSet( pPlayer->GetFlags(), FL_DUCKING ) && pPlayer->GetGroundEntity()
 		? weaponInfo.GetInaccuracyCrouch( GetEconItemView(), m_weaponMode )
 		: weaponInfo.GetInaccuracyStand( GetEconItemView(), m_weaponMode );
+#else
+	const CCSWeaponInfo& weaponInfo = GetCSWpnData();
+
+	float fMaxSpeed = GetMaxSpeed();
+	if ( fMaxSpeed == 0.0f )
+		fMaxSpeed = GetCSWpnData().GetMaxSpeed( GetEconItemView(), 0 );
+
+	float fAccuracy = m_fAccuracyPenalty;
+
+	// CS-PRO TEST FEATURE
+	// Adding movement penalty here results in an instaneous penalty that doesn't persist.
+#if !MOVEMENT_ACCURACY_DECAYED
+	float flVerticalSpeed = abs( pPlayer->GetAbsVelocity().z );
+
+	float flMovementInaccuracyScale = RemapValClamped(pPlayer->GetAbsVelocity().Length2D(), 
+		fMaxSpeed * CS_PLAYER_SPEED_DUCK_MODIFIER, 
+		fMaxSpeed * 0.95f,							// max out at 95% of run speed to avoid jitter near max speed
+		0.0f, 1.0f );
+
+	if ( flMovementInaccuracyScale > 0.0f )
+	{
+		// power curve only applies at speeds greater than walk
+		if (( MP_WEAPON_ACCURACY_SEPARATE_WALK_FUNCTION ) && ( pPlayer->m_bIsWalking ) )
+		{
+			//flMovementInaccuracyScale *= 1.0;	// reduce inaccuracy when walking or slower. This is commented out because at 1.0, it's a noop but preserved in case a different value is desired.
+			//flMovementInaccuracyScale = powf( flMovementInaccuracyScale, float( MOVEMENT_WALK_CURVE01_EXPONENT ) );
+		}
+		else
+		{
+			flMovementInaccuracyScale = powf( flMovementInaccuracyScale, float( MOVEMENT_CURVE01_EXPONENT ));
+		}
+
+
+		fAccuracy += flMovementInaccuracyScale * weaponInfo.GetInaccuracyMove( GetEconItemView(), m_weaponMode );
+	}
+
+	// If we are in the air/on ladder, add inaccuracy based on vertical speed (maximum accuracy at apex of jump)
+	if ( pPlayer->GetGroundEntity() == nullptr )
+	{
+		float flInaccuracyJumpInitial = weaponInfo.GetInaccuracyJumpInitial( GetEconItemView() ) * weapon_air_spread_scale.GetFloat();
+		static const float kMaxFallingPenalty = 2.0f;	// Accuracy is never worse than 2x starting penalty
+
+		// Use sqrt here to make the curve more "sudden" around the accurate point at the apex of the jump
+		float fSqrtMaxJumpSpeed = sqrtf( sv_jump_impulse.GetFloat() );
+		float fSqrtVerticalSpeed = sqrtf( flVerticalSpeed );
+
+		float flAirSpeedInaccuracy = RemapVal( fSqrtVerticalSpeed,
+			fSqrtMaxJumpSpeed * 0.25f,	// Anything less than 6.25% of maximum speed has no additional accuracy penalty for z-motion (6.25% = .25 * .25)
+			fSqrtMaxJumpSpeed,			// Penalty at max jump speed
+			0.0f,						// No movement-related penalty when close to stopped
+			flInaccuracyJumpInitial );	// Movement-penalty at start of jump
+
+		// Clamp to min/max values.  (Don't use RemapValClamped because it makes clamping to > kJumpMovePenalty hard)
+		if ( flAirSpeedInaccuracy < 0 )
+			flAirSpeedInaccuracy = 0;
+		else if ( flAirSpeedInaccuracy > ( kMaxFallingPenalty * flInaccuracyJumpInitial ) )
+			flAirSpeedInaccuracy = kMaxFallingPenalty * flInaccuracyJumpInitial;
+
+		// Apply air velocity inaccuracy penalty
+		// (There is an additional penalty for being in the air at all applied in UpdateAccuracyPenalty())
+		fAccuracy += flAirSpeedInaccuracy;
+	}
+#endif // !MOVEMENT_ACCURACY_DECAYED
+#endif
 
 	if ( fAccuracy > 1.0f )
 		fAccuracy = 1.0f;
@@ -1786,7 +1856,7 @@ bool CWeaponCSBase::WantReticleShown( void )
 	if ( pPlayer->HasShield() && pPlayer->IsShieldDrawn() == true )
 		return false;
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// The VGUI crosshair below draws the single Mac reticle for every weapon.
 	return false;
 #endif
@@ -1899,15 +1969,13 @@ void CWeaponCSBase::DrawCrosshair()
 
 	if ( pPlayer->HasShield() && pPlayer->IsShieldDrawn() == true )
 		return;
-	// Mac uses this VGUI crosshair for unscoped sniper rifles too.
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
+	// The preset also draws this crosshair for unscoped sniper rifles.
 	if ( GetWeaponType() == WEAPONTYPE_SNIPER_RIFLE && pPlayer->m_bIsScoped )
 #else
 	if ( GetWeaponType() == WEAPONTYPE_SNIPER_RIFLE && !weapon_debug_spread_show.GetBool() )
 #endif
-	{
 		return;
-	}
 	float fHalfFov = DEG2RAD( pPlayer->GetFOV() ) * 0.5f;
 	float flInaccuracy = GetInaccuracy();
 	float flSpread = GetSpread();
@@ -3027,8 +3095,8 @@ void CWeaponCSBase::Spawn()
 	BaseClass::InitializeAttributes();
 	BaseClass::Spawn();
 
-#ifndef CLIENT_DLL
-	// Remove grenades placed by maps or spawned directly by scripts.
+#if defined( USE_MAC_PRESET ) && !defined( CLIENT_DLL )
+	// Remove grenades, knives and C4 placed by maps or spawned directly by scripts.
 	if ( GetWeaponType() == WEAPONTYPE_GRENADE || GetCSWeaponID() == WEAPON_C4 ||
 		( GetWeaponType() == WEAPONTYPE_KNIFE && GetCSWeaponID() != WEAPON_TASER ) )
 	{
@@ -3036,15 +3104,17 @@ void CWeaponCSBase::Spawn()
 		return;
 	}
 
-#if defined( OSX )
 	// Use the correct model-specific paint atlas for each weapon.
 	CEconItemView *pItem = GetEconItemView();
 	const int itemDefIndex = pItem && pItem->IsValid() ? pItem->GetItemIndex() : 0;
 	// The silenced M4A1-S and USP-S use the M4A1 and P2000 entity classes.
-	const int paintKit = GetCSWeaponID() == WEAPON_AWP ? 279 :
-		GetCSWeaponID() == WEAPON_AK47 ? 801 :
-		itemDefIndex == 60 ? 587 :
-		itemDefIndex == 61 ? 637 : 0;
+	const int kItemDefM4A1Silencer = 60, kItemDefUSPSilencer = 61;
+	const int kPaintKitAWPAsiimov = 279, kPaintKitAK47Asiimov = 801;
+	const int kPaintKitM4A1SMechaIndustries = 587, kPaintKitUSPSCyrex = 637;
+	const int paintKit = GetCSWeaponID() == WEAPON_AWP ? kPaintKitAWPAsiimov :
+		GetCSWeaponID() == WEAPON_AK47 ? kPaintKitAK47Asiimov :
+		itemDefIndex == kItemDefM4A1Silencer ? kPaintKitM4A1SMechaIndustries :
+		itemDefIndex == kItemDefUSPSilencer ? kPaintKitUSPSCyrex : 0;
 	if ( paintKit != 0 )
 	{
 		m_nFallbackPaintKit = paintKit;
@@ -3057,7 +3127,6 @@ void CWeaponCSBase::Spawn()
 			pItem->SetOrAddAttributeValueByName( "set item texture wear", 0.18f );
 		}
 	}
-#endif
 #endif
 
 	// Override the bloat that our base class sets as it's a little bit bigger than we want.
@@ -3688,6 +3757,7 @@ void CWeaponCSBase::UpdateAccuracyPenalty( )
 	const CCSWeaponInfo& weaponInfo = GetCSWpnData( );
 
 	float fNewPenalty = 0.0f;
+#if defined( USE_MAC_PRESET )
 	// Use the same base inaccuracy while moving, airborne, or on a ladder.
 	if ( FBitSet( pPlayer->GetFlags( ), FL_DUCKING ) && pPlayer->GetGroundEntity() != nullptr )
 	{
@@ -3697,6 +3767,39 @@ void CWeaponCSBase::UpdateAccuracyPenalty( )
 	{
 		fNewPenalty += weaponInfo.GetInaccuracyStand( GetEconItemView( ), m_weaponMode );
 	}
+#else
+
+	// Adding movement penalty here results in a penalty that persists and requires decay to eliminate.
+#if MOVEMENT_ACCURACY_DECAYED
+	// movement penalty
+	fNewPenalty += RemapValClamped( pPlayer->GetAbsVelocity().Length2D(), 
+		weaponInfo.GetMaxSpeed(m_weaponMode, GetEconItemView()) * CS_PLAYER_SPEED_DUCK_MODIFIER, 
+		weaponInfo.GetMaxSpeed(m_weaponMode, GetEconItemView()) * 0.95f,							// max out at 95% of run speed to avoid jitter near max speed
+		0.0f, weaponInfo.GetInaccuracyMove( m_weaponMode, GetEconItemView( ) );
+#endif
+
+
+	// on ladder?
+	if ( pPlayer->GetMoveType( ) == MOVETYPE_LADDER )
+	{
+		fNewPenalty += weaponInfo.GetInaccuracyLadder( GetEconItemView( ), m_weaponMode ) + weaponInfo.GetInaccuracyLadder( GetEconItemView( ), Primary_Mode );
+	}
+	// in the air?
+	else if ( pPlayer->GetGroundEntity() == nullptr )
+	// 	else if ( !FBitSet( pPlayer->GetFlags(), FL_ONGROUND ) )
+	{
+		fNewPenalty += weaponInfo.GetInaccuracyStand( GetEconItemView(), m_weaponMode );
+		fNewPenalty += weaponInfo.GetInaccuracyJump( GetEconItemView(), m_weaponMode ) * weapon_air_spread_scale.GetFloat();
+	}
+	else if ( FBitSet( pPlayer->GetFlags( ), FL_DUCKING ) )
+	{
+		fNewPenalty += weaponInfo.GetInaccuracyCrouch( GetEconItemView( ), m_weaponMode );
+	}
+	else
+	{
+		fNewPenalty += weaponInfo.GetInaccuracyStand( GetEconItemView( ), m_weaponMode );
+	}
+#endif
 
 	if ( m_bInReload )
 	{
@@ -3734,7 +3837,22 @@ float CWeaponCSBase::GetRecoveryTime( void )
 
 	const CCSWeaponInfo& weaponInfo = GetCSWpnData( );
 
+#if defined( USE_MAC_PRESET )
 	if ( FBitSet( pPlayer->GetFlags( ), FL_DUCKING ) && pPlayer->GetGroundEntity() != nullptr )
+#else
+	if ( pPlayer->GetMoveType( ) == MOVETYPE_LADDER )
+	{
+		return weaponInfo.GetRecoveryTimeStand( GetEconItemView( ) );
+	}
+	else if ( !FBitSet( pPlayer->GetFlags( ), FL_ONGROUND ) )	// in air
+	{
+		// enforce a large recovery speed penalty (400%) for players in the air; this helps to provide
+		// comparable in-air accuracy to the old weapon model
+		
+		return weaponInfo.GetRecoveryTimeCrouch( GetEconItemView( ) ) * 4.0f;
+	}
+	else if ( FBitSet( pPlayer->GetFlags( ), FL_DUCKING ) )
+#endif
 	{
 		float flRecoveryTime = weaponInfo.GetRecoveryTimeCrouch( GetEconItemView( ) );
 		float flRecoveryTimeFinal = weaponInfo.GetRecoveryTimeCrouchFinal( GetEconItemView( ) );
@@ -3774,6 +3892,9 @@ void CWeaponCSBase::OnJump( float fImpulse )
 void CWeaponCSBase::OnLand( float fVelocity )
 {
 	float fPenalty = GetCSWpnData().GetInaccuracyLand( GetEconItemView(), m_weaponMode ) * fVelocity;
+#if !defined( USE_MAC_PRESET )
+	m_fAccuracyPenalty += fPenalty;
+#endif
 	fPenalty = clamp( fPenalty, -1.0f, 1.0f );
 
 	CCSPlayer *pPlayer = GetPlayerOwner();
@@ -3800,7 +3921,7 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
     float angle;
     float magnitude;
     int seed;
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
     unsigned int spraySeed = 0;
 #endif
     CCSPlayer *pPlayer = GetPlayerOwner();
@@ -3816,7 +3937,7 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
     }
     else
     {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
         // Mix the predicted command seed with the shot index so successive
         // automatic shots cannot walk the weapon's fixed recoil table.
         spraySeed = (unsigned int)GetPredictionRandomSeed() ^
@@ -3841,7 +3962,7 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
         g_WeaponRecoilData.GetRecoilOffsets( this, weaponMode, seed, angle, magnitude );
     }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
     if ( IsFullAuto() )
     {
         // Keep an upward, visible kick without the table's repeating side drift.
@@ -3874,7 +3995,7 @@ void CWeaponCSBase::SaveCustomMaterialsTextures( )
 
 void CWeaponCSBase::UpdateCustomMaterial( void )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	ClearCustomMaterials();
 	CEconItemView *pItem = GetEconItemView();
 	if ( !pItem )
@@ -3891,7 +4012,7 @@ void CWeaponCSBase::UpdateCustomMaterial( void )
 
 void CWeaponCSBase::CheckCustomMaterial( void )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	UpdateCustomMaterial();
 #endif
 }
@@ -3920,7 +4041,7 @@ void CWeaponCSBase::UpdateIronSightController()
 
 int CWeaponCSBase::GetZoomFOV( int nZoomLevel ) const
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Allied Assault's Springfield and Kar98 sniper files both specify zoom 20.
 	if ( GetCSWeaponID() == WEAPON_AWP && nZoomLevel == 1 )
 		return 20;
@@ -3936,7 +4057,7 @@ int CWeaponCSBase::GetZoomFOV( int nZoomLevel ) const
 
 float CWeaponCSBase::GetZoomTime( int nZoomLevel ) const
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// AA changes FOV immediately; the scope overlay fades in separately.
 	if ( GetCSWeaponID() == WEAPON_AWP && nZoomLevel <= 1 )
 		return 0.0f;

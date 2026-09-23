@@ -735,7 +735,7 @@ void CCSWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 
 	m_weaponId = WeaponIdFromString( szWeaponName );
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// The local Mac loadout can hold a rifle plus an AWP. Give the AWP
 	// its own selection position so the scroll wheel can reach both.
 	if ( m_weaponId == WEAPON_AWP )

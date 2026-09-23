@@ -158,7 +158,7 @@ static void SV_CheatsChanged_f( IConVar *pConVar, const char *pOldString, float 
         return;
 
     ConVarRef var( pConVar );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// This standalone Mac preset applies only to the user's local listen server.
 	// A remote server's replicated sv_cheats value is never overridden.
 	if ( sv.IsActive() && !sv.IsDedicated() && !var.GetBool() )
@@ -3452,7 +3452,7 @@ void SV_Frame( bool finalTick )
         return;
     }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Establish cheats as soon as a local map starts, including after map changes.
 	if ( !sv.IsDedicated() && !sv_cheats.GetBool() )
 		sv_cheats.SetValue( 1 );

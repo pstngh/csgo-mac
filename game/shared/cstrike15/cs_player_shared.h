@@ -1,10 +1,15 @@
 #if !defined CS_PLAYER_SHARED_H
 #define CS_PLAYER_SHARED_H
 
+#if defined( USE_MAC_PRESET )
 // Allied Assault multiplayer lean, shared by client prediction and server movement.
 float CS_AdvanceAALean( float leanAngle, int buttons, float frameTime );
 Vector CS_AALeanEyeOffset( const QAngle &viewAngles, float leanAngle );
 Vector CS_AALeanTraceEye( CBaseEntity *player, const Vector &start, const Vector &desired );
+
+// Allied Assault deathmatch speed cap for a weapon carried by the local listen-server host.
+float CS_AAWeaponMaxSpeed( int weaponId );
+#endif
 
 // 
 // Configuration for using high priority entities by CS players

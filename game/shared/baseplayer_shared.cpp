@@ -144,7 +144,7 @@ void DebugBox( const char *szString, const Vector &vPos, const Vector &vSize, ui
 ConVar sv_infinite_ammo( "sv_infinite_ammo", "0", FCVAR_RELEASE | FCVAR_REPLICATED, "Player's active weapon will never run out of ammo. If set to 2 then player has infinite total ammo but still has to reload the magazine." );
 
 ConVar view_punch_decay( "view_punch_decay", "18", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Decay factor exponent for view punch" );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 // Keep the center of the view on the recoil-adjusted shot direction.
 ConVar view_recoil_tracking( "view_recoil_tracking", "1.0", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "How closely the view tracks with the aim punch from weapon recoil" );
 #else

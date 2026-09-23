@@ -108,7 +108,7 @@ static ConVar con_trace( "con_trace", "0", FCVAR_MATERIAL_SYSTEM_THREAD, "Print 
 static ConVar con_notifytime( "con_notifytime","8", FCVAR_MATERIAL_SYSTEM_THREAD, "How long to display recent console text to the upper part of the game window" );
 static ConVar con_times("contimes", "8", FCVAR_MATERIAL_SYSTEM_THREAD, "Number of console lines to overlay for debugging." );
 static ConVar con_drawnotify( "con_drawnotify", IsGameConsole() ? "0" : "1", 0, "Disables drawing of notification area (for taking screenshots)." );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 static void KeepMacConsoleEnabled( IConVar *pVar, const char *, float )
 {
 	ConVarRef var( pVar );

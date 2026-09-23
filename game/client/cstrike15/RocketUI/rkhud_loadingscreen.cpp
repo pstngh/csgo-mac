@@ -39,7 +39,7 @@ void RocketLoadingScreenDocument::LoadDialog()
             Error( "Couldn't create rocketui loadingscreen!\n");
             /* Exit */
         }
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
         if( Rml::Element *continueButton = m_pInstance->GetElementById( "continue" ) )
             continueButton->SetProperty( "display", "none" );
 #else

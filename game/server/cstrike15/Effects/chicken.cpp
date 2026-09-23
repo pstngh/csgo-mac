@@ -78,7 +78,7 @@ void CChicken::Precache( void )
 //-----------------------------------------------------------------------
 void CChicken::Spawn( void )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Suppress both map-placed and script-created chickens in the Mac preset.
 	UTIL_Remove( this );
 	return;

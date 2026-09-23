@@ -12,7 +12,11 @@ DECLARE_HUD_MESSAGE( RkHudRadar, ProcessSpottedEntityUpdate );
 
 ConVar rocket_hud_radar_info_linger_time( "rocket_hud_radar_info_linger_time", "3", 0, "How long in seconds does the data stay visible after an update" );
 ConVar rocket_hud_radar_scale( "rocket_hud_radar_scale", "0.15", 0, "scale for radar" );
+#if defined( USE_MAC_PRESET )
 ConVar rocket_hud_radar_enable( "rocket_hud_radar_enable", "0", FCVAR_ARCHIVE, "Show the experimental square RocketUI radar" );
+#else
+ConVar rocket_hud_radar_enable( "rocket_hud_radar_enable", "1", FCVAR_ARCHIVE, "Show the experimental square RocketUI radar" );
+#endif
 
 static void RadarSizeChanged( IConVar *pConvar, const char *szOldValue, float fOldValue )
 {

@@ -468,7 +468,9 @@ IMPLEMENT_SERVERCLASS_ST( CCSPlayer, DT_CSPlayer )
 
 	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+#if defined( USE_MAC_PRESET )
 	SendPropFloat( SENDINFO( m_flLeanAngle ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+#endif
 		
 	SendPropInt( SENDINFO( m_iAddonBits ), NUM_ADDON_BITS, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iPrimaryAddon ), 8, SPROP_UNSIGNED ),
@@ -633,7 +635,9 @@ ConCommand cc_CreatePredictionError( "CreatePredictionError", cc_CreatePredictio
 // -------------------------------------------------------------------------------- //
 CCSPlayer::CCSPlayer()
 {
+#if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+#endif
 	m_PlayerAnimState = CreatePlayerAnimState( this, this, LEGANIM_9WAY, true );
 	m_PlayerAnimStateCSGO = CreateCSGOPlayerAnimstate( this );
 
@@ -1332,7 +1336,9 @@ void CCSPlayer::SetCSSpawnLocation( Vector position, QAngle angle )
 
 void CCSPlayer::Spawn()
 {
+#if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+#endif
 	m_RateLimitLastCommandTimes.Purge();
 
 	// Get rid of the progress bar...
@@ -1470,8 +1476,8 @@ void CCSPlayer::Spawn()
 
 	BaseClass::Spawn();
 
-#if defined( OSX )
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+#if defined( USE_MAC_PRESET )
+	if ( IsLocalListenServerHost() )
 	{
 		AddFlag( FL_GODMODE );
 		if ( CSGameRules() )
@@ -2004,8 +2010,8 @@ void CCSPlayer::GiveDefaultItems()
 
 	const char *pchTeamKnifeName = GetTeamNumber() == TEAM_TERRORIST ? "weapon_knife_t" : "weapon_knife";
 
-#if defined( OSX )
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() &&
+#if defined( USE_MAC_PRESET )
+	if ( IsLocalListenServerHost() &&
 		 ( CSGameRules()->IsPlayingClassic() || CSGameRules()->IsPlayingGunGameDeathmatch() ) &&
 		 ( GetTeamNumber() == TEAM_CT || GetTeamNumber() == TEAM_TERRORIST ) )
 	{
@@ -2047,9 +2053,9 @@ void CCSPlayer::GiveDefaultItems()
 			{
 				const char *secondaryString = NULL;
 				if ( GetTeamNumber() == TEAM_CT )
-					secondaryString = "weapon_usp_silencer";
+					secondaryString = mp_ct_default_secondary.GetString();
 				else if ( GetTeamNumber() == TEAM_TERRORIST )
-					secondaryString = "weapon_usp_silencer";
+					secondaryString = mp_t_default_secondary.GetString();
 
 				CSWeaponID weaponId = WeaponIdFromString( secondaryString );
 				if ( weaponId )
@@ -2597,7 +2603,9 @@ public:
 
 void CCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
+#if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+#endif
 	SetKilledTime( gpGlobals->curtime );
 
 	// [pfreese] Process on-death achievements
@@ -4070,13 +4078,13 @@ void CCSPlayer::PostThink()
 {
 	BaseClass::PostThink();
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Bots may receive helmets from free armor, map loadouts or purchases.
 	// Remove only helmet protection, leaving their vest armor untouched.
 	if ( !engine->IsDedicatedServer() && IsBot() )
 		m_bHasHelmet = false;
 
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+	if ( IsLocalListenServerHost() )
 	{
 		// Keep the local player's protections and funds across rounds and
 		// after purchases, without granting them to bots or remote players.
@@ -5116,10 +5124,10 @@ int CCSPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	CEconItemView *pItem = NULL;
 
 	bool bApplyHitTagging = pInflictorWeapon != NULL || ( pGrenade && fDamageToHealth > 0 );
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// God mode does not stop CS:GO's separate hit-tagging slowdown. Keep the
 	// standalone listen-server host's movement speed when shot or hit.
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+	if ( IsLocalListenServerHost() )
 		bApplyHitTagging = false;
 #endif
 	if ( bApplyHitTagging )
@@ -5833,10 +5841,10 @@ void CCSPlayer::Reset( bool resetScore )
 //-----------------------------------------------------------------------------
 void CCSPlayer::HintMessage( const char *pMessage, bool bDisplayIfDead, bool bOverrideClientSettings )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Keep the local Mac HUD free of server-sent objective and control hints,
 	// including messages marked to override cl_autohelp.
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+	if ( IsLocalListenServerHost() )
 		return;
 #endif
 	if ( !bDisplayIfDead && !IsAlive() || !IsNetClient() || !m_pHintMessageQueue )
@@ -5872,8 +5880,8 @@ void CCSPlayer::InitializeAccount( int amount )
 
 	m_iAccount = clamp<int, int, int>( m_iAccount, 0, MaxAmount );
 
-#if defined( OSX )
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+#if defined( USE_MAC_PRESET )
+	if ( IsLocalListenServerHost() )
 		m_iAccount = MaxAmount;
 #endif
 
@@ -6117,8 +6125,8 @@ void CCSPlayer::AddAccount( int amount, bool bTrackChange, bool bItemBought, con
 		
 	m_iAccount = clamp( (int)m_iAccount, 0, CSGameRules()->GetMaxMoney() );
 
-#if defined( OSX )
-	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+#if defined( USE_MAC_PRESET )
+	if ( IsLocalListenServerHost() )
 		m_iAccount = CSGameRules()->GetMaxMoney();
 #endif
 
@@ -9188,7 +9196,7 @@ bool CCSPlayer::ClientCommand( const CCommand &args )
 			if ( !CSGameRules() )
 				return false;
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 			if ( !engine->IsDedicatedServer() )
 				ResetForceTeamThink(); // leave local team choice open until the player selects one
 			else
@@ -11291,21 +11299,22 @@ void CCSPlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 	CWeaponCSBase *pCSWeapon = dynamic_cast< CWeaponCSBase* >( pWeapon );
 	if ( pCSWeapon )
 	{
+#if defined( USE_MAC_PRESET )
 		if ( pCSWeapon->GetWeaponType() == WEAPONTYPE_GRENADE || pCSWeapon->GetCSWeaponID() == WEAPON_C4 ||
 			( pCSWeapon->GetWeaponType() == WEAPONTYPE_KNIFE && pCSWeapon->GetCSWeaponID() != WEAPON_TASER ) )
 		{
 			UTIL_Remove( pCSWeapon );
 			return;
 		}
+#endif
 
 		// For rifles, pistols, or the knife, drop our old weapon in this slot.
 		if ( pCSWeapon->GetSlot() == WEAPON_SLOT_RIFLE || 
 			pCSWeapon->GetSlot() == WEAPON_SLOT_PISTOL )
 		{
 			CBaseCombatWeapon *pDropWeapon = Weapon_GetSlot( pCSWeapon->GetSlot() );
-#if defined( OSX )
-			if ( pCSWeapon->GetSlot() == WEAPON_SLOT_RIFLE &&
-				 !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+#if defined( USE_MAC_PRESET )
+			if ( pCSWeapon->GetSlot() == WEAPON_SLOT_RIFLE && IsLocalListenServerHost() )
 			{
 				// Keep one AWP plus one other primary weapon in the local
 				// Mac loadout. Replacing either category drops only that one.
@@ -11491,11 +11500,10 @@ bool CCSPlayer::BumpWeapon( CBaseCombatWeapon *pBaseWeapon )
 //	}
 
 	bool bMacExtraPrimary = false;
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Only explicitly granted/bought weapons may fill the extra primary slot.
 	// Allowing every touch here makes nearby dropped guns replace the loadout.
-	bMacExtraPrimary = m_bIsBeingGivenItem && !engine->IsDedicatedServer() &&
-		this == UTIL_GetLocalPlayerOrListenServerHost() &&
+	bMacExtraPrimary = m_bIsBeingGivenItem && IsLocalListenServerHost() &&
 		pWeapon->GetSlot() == WEAPON_SLOT_RIFLE;
 #endif
 	if( bPickupC4 || bStackableItem || bPickupGrenade || bPickupTaser || bMacExtraPrimary || /*bPickupCarriableItem || */ !Weapon_SlotOccupied( pWeapon ) )
@@ -12630,6 +12638,7 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 			}
 		}
 	}
+#if defined( USE_MAC_PRESET )
 	const char *pchItemClass = ( pScriptItem && pScriptItem->IsValid() )
 		? pScriptItem->GetStaticData()->GetItemClass() : pchName;
 	const CCSWeaponInfo *pWeaponInfo = GetWeaponInfo( WeaponIdFromString( pchItemClass ) );
@@ -12637,6 +12646,7 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 		pWeaponInfo->m_weaponId == WEAPON_C4 ||
 		( pWeaponInfo->GetWeaponType( pScriptItem ) == WEAPONTYPE_KNIFE && pWeaponInfo->m_weaponId != WEAPON_TASER ) ) )
 		return NULL;
+#endif
 
 //#if !defined( NO_STEAM_GAMECOORDINATOR )
 	if ( bNativeArmorItem )
@@ -12795,7 +12805,20 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 
 bool CCSPlayer::CanUseGrenade( CSWeaponID nID )
 {
+#if defined( USE_MAC_PRESET )
 	return false;
+#else
+	if ( nID == WEAPON_MOLOTOV )
+	{
+		if ( gpGlobals->curtime < m_fMolotovUseTime )
+		{
+			// Can't use molotov until timer elapses
+			return false;
+		}
+	}
+
+	return true;
+#endif
 }
 
 void CCSPlayer::DoAnimStateEvent( PlayerAnimEvent_t evt )
@@ -12900,8 +12923,8 @@ void CCSPlayer::ReportCustomClothingModels( void )
 
 bool CCSPlayer::HandleDropWeapon( CBaseCombatWeapon *pWeapon, bool bSwapping )
 {
-#if defined( OSX )
-	const bool bSilentDropNotice = !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost();
+#if defined( USE_MAC_PRESET )
+	const bool bSilentDropNotice = IsLocalListenServerHost();
 #else
 	const bool bSilentDropNotice = false;
 #endif

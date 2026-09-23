@@ -60,7 +60,7 @@ private:
 	int m_iScopeArcTexture;
 	int m_iScopeLineBlurTexture;
 	int m_iScopeDustTexture;
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	float m_flMohaaScopeAlpha;
 #endif
 
@@ -85,7 +85,7 @@ CHudScope::CHudScope( const char *pElementName ) : CHudElement(pElementName), Ba
 
 	m_fAnimInset = 1;
 	m_fLineSpreadDistance = 1;
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	m_flMohaaScopeAlpha = 0.0f;
 #endif
 }
@@ -159,13 +159,13 @@ void CHudScope::Paint( void )
 		
 	if( !pWeapon || pWeapon->GetWeaponType() != WEAPONTYPE_SNIPER_RIFLE )
 	{
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		m_flMohaaScopeAlpha = 0.0f;
 #endif
 		return;
 	}
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	if ( pWeapon->GetCSWeaponID() == WEAPON_AWP )
 	{
 		// Draw the Allied Assault-style circular mask directly. The Mac VGUI
@@ -259,7 +259,7 @@ void CHudScope::Paint( void )
 		// (since this is a framerate-dependent approach function).
 		m_fLineSpreadDistance = RemapValClamped( gpGlobals->frametime * 140.0f, 0.0f, 1.0f, m_fLineSpreadDistance, fRawSpreadDistance );
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		// Keep the AWP scope glass and reticle crisp while moving. Accuracy
 		// still affects the shot; only the visual blur is suppressed.
 		if ( pWeapon->GetCSWeaponID() == WEAPON_AWP )

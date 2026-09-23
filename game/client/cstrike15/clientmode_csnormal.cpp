@@ -133,7 +133,7 @@ ConVar cl_spec_mode(
 ConVar cl_draw_only_deathnotices( "cl_draw_only_deathnotices", "0", FCVAR_CHEAT, "For drawing only the crosshair and death notices (used for moviemaking)" );
 ConVar cl_radar_square_with_scoreboard( "cl_radar_square_with_scoreboard", "1", FCVAR_ARCHIVE | FCVAR_RELEASE, "If set, the radar will toggle to square when the scoreboard is visible." );
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 static void KeepMacDefaultFov( IConVar *pVar, const char *, float )
 {
 	ConVarRef var( pVar );

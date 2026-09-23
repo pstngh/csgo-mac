@@ -28,7 +28,14 @@ endif()
 
 include(kisak-strike-build-options.cmake)
 
-if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+if(USE_MAC_PRESET)
+    add_definitions(-DUSE_MAC_PRESET)
+endif()
+
+if(APPLE)
+    if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+        message(FATAL_ERROR "macOS builds support Apple Silicon (arm64) only")
+    endif()
     include_directories(BEFORE "${CMAKE_SOURCE_DIR}/thirdparty/macos_compat")
     include_directories(BEFORE "${CMAKE_SOURCE_DIR}/thirdparty/sse2neon")
     # The 2017 codebase intentionally initializes signed SIMD masks with

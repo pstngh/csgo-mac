@@ -212,7 +212,7 @@ bool CHudElement::GetIgnoreGlobalHudDisable( void )
 //-----------------------------------------------------------------------------
 bool CHudElement::ShouldDraw( void )
 {
-#if defined( OSX ) && defined( CSTRIKE15 )
+#if defined( USE_MAC_PRESET ) && defined( CSTRIKE15 )
 	// Keep the in-game presentation crosshair-only. Weapon selection must
 	// remain active for invnext/invprev even though its CS:GO paint is empty.
 	// The sniper scope is part of aiming; the buy menu is opened explicitly.

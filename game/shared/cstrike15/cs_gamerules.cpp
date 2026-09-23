@@ -1678,7 +1678,7 @@ ConVar mp_buy_allow_grenades(
 
 ConVar mp_do_warmup_period( 
     "mp_do_warmup_period", 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
     "0",
 #else
     "1",
@@ -2205,7 +2205,7 @@ ConVar mp_defuser_allocation(
 
 ConVar mp_give_player_c4(
 	"mp_give_player_c4",
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	"0",
 #else
 	"1",
@@ -8029,7 +8029,7 @@ static bool Helper_CheckFieldAppliesToTeam( char const *szField, int nTeam )
             m_bMapHasBombZone		= false;
         }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		m_bMapHasBombTarget = false;
 		m_bMapHasBombZone = false;
 #endif
@@ -14271,7 +14271,7 @@ void ServerThinkReplayUploader()
             m_bMapHasBombZone		= false;
         }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		// Objective zones never turn a deathmatch map into a bomb round.
 		m_bMapHasBombTarget = false;
 		m_bMapHasBombZone = false;
@@ -15550,7 +15550,7 @@ bool CCSGameRules::IsMatchWaitingForResume()
 
 int CCSGameRules::DefaultFOV()
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	return 80;
 #else
     return 90;
@@ -17657,7 +17657,7 @@ void CCSGameRules::InitializeGameTypeAndMode( void )
 
 	g_pGameTypes->CheckShouldSetDefaultGameModeAndType( szMapNameFull );
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	if ( !engine->IsDedicatedServer() )
 	{
 		// Maps may request their classic default mode; local play starts in DM.
@@ -17817,7 +17817,7 @@ void CCSGameRules::InitializeGameTypeAndMode( void )
 
 #endif
 
-#if defined( OSX ) && !defined( CLIENT_DLL )
+#if defined( USE_MAC_PRESET ) && !defined( CLIENT_DLL )
 	if ( !engine->IsDedicatedServer() )
 	{
 		// Apply these after the deathmatch and map cfgs have executed.

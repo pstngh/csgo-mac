@@ -228,7 +228,7 @@ void CCSGameMovement::CheckParameters( void )
 
 	// NOTE[pmf] original CS ignores walk while ducking. AA stacks both 0.6 modifiers.
 	// we can't simply test mv->m_iSpeedCropped == SPEED_CROPPED_DUCK, because that is set AFTER this code executes
-#if !defined( OSX )
+#if !defined( USE_MAC_PRESET )
 	if ( ( mv->m_nButtons & IN_DUCK ) || ( player->m_Local.m_bDucking ) || ( player->GetFlags() & FL_DUCKING ) )
 	{
 		walkButtonIsDown = false;
@@ -237,7 +237,7 @@ void CCSGameMovement::CheckParameters( void )
 
 	if ( walkButtonIsDown )
 	{
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		mv->m_flMaxSpeed *= CS_PLAYER_SPEED_WALK_MODIFIER;
 		m_pCSPlayer->m_bIsWalking = true;
 #else
@@ -255,7 +255,7 @@ void CCSGameMovement::CheckParameters( void )
 		m_pCSPlayer->m_bIsWalking = false;
 	}
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// The input ratios alone would be clipped back to the same max speed.
 	// AA's command scale caps axial/back+strafe movement at the largest
 	// active input fraction: forward 1.0, strafe 0.85, backward 0.8.
@@ -470,11 +470,13 @@ bool CCSGameMovement::CanAccelerate()
 
 void CCSGameMovement::PlayerMove()
 {
+#if defined( USE_MAC_PRESET )
 	if ( m_pCSPlayer->IsAlive() && m_pCSPlayer->GetMoveType() != MOVETYPE_LADDER )
 		m_pCSPlayer->m_flLeanAngle = CS_AdvanceAALean( m_pCSPlayer->m_flLeanAngle,
 			mv->m_nButtons, gpGlobals->frametime );
 	else
 		m_pCSPlayer->m_flLeanAngle = 0.0f;
+#endif
 
 	if ( !m_pCSPlayer->CanMove() )
 	{
@@ -1296,13 +1298,13 @@ void CCSGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel 
 
 	bool bIsDucking = ( mv->m_nButtons & IN_DUCK ) || ( player->m_Local.m_bDucking ) || ( player->GetFlags() & FL_DUCKING );
 	bool bIsWalking = ( mv->m_nButtons & ( /*IN_WALK | */ IN_SPEED ) ) != 0 && !bIsDucking;
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// AA multiplies walking and crouching speeds when both are active.
 	bIsWalking = ( mv->m_nButtons & IN_SPEED ) != 0;
 #endif
 
 	float flMaxSpeed = 250.0f;
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	flMaxSpeed = CS_PLAYER_SPEED_RUN;
 #endif
 	float fAccelerationScale = MAX(flMaxSpeed, wishspeed);
@@ -1321,17 +1323,10 @@ void CCSGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel 
 	{
 		float flWeaponMaxSpeed = csWeapon->GetMaxSpeed();
 		bool bMacLocalPlayer = false;
-#if defined( OSX )
-#if defined( CLIENT_DLL )
-		bMacLocalPlayer = engine->IsClientLocalToActiveServer() &&
-			m_pCSPlayer == C_CSPlayer::GetLocalCSPlayer();
-#else
-		bMacLocalPlayer = !engine->IsDedicatedServer() &&
-			m_pCSPlayer == UTIL_GetLocalPlayerOrListenServerHost();
-#endif
+#if defined( USE_MAC_PRESET )
+		bMacLocalPlayer = m_pCSPlayer->IsLocalListenServerHost();
 		if ( bMacLocalPlayer )
-			flWeaponMaxSpeed = csWeapon->GetCSWeaponID() == WEAPON_AWP ?
-				CS_PLAYER_SPEED_RUN * 0.8f : CS_PLAYER_SPEED_RUN;
+			flWeaponMaxSpeed = CS_AAWeaponMaxSpeed( csWeapon->GetCSWeaponID() );
 #endif
 		bIsSlowSniperScoped = !bMacLocalPlayer && csWeapon->GetCSZoomLevel() > 0 &&
 			csWeapon->GetZoomLevels() > 1 && ( flWeaponMaxSpeed * CS_PLAYER_SPEED_WALK_MODIFIER ) < 110.0f;

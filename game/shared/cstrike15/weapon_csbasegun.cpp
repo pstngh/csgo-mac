@@ -148,7 +148,7 @@ void CWeaponCSBaseGun::Drop( const Vector &vecVelocity )
 	BaseClass::Drop( vecVelocity );
 }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 static void MacAWPToggleScopeOnPress( CWeaponCSBaseGun *pWeapon, CCSPlayer *pPlayer )
 {
 	if ( pWeapon->GetCSWeaponID() != WEAPON_AWP ||
@@ -169,7 +169,7 @@ void CWeaponCSBaseGun::ItemBusyFrame()
 	if ( !pPlayer )
 		return;
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	MacAWPToggleScopeOnPress( this, pPlayer );
 #endif
 
@@ -193,7 +193,7 @@ void CWeaponCSBaseGun::ItemPostFrame()
 	if ( !pPlayer )
 		return;
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	MacAWPToggleScopeOnPress( this, pPlayer );
 #endif
 
@@ -361,7 +361,7 @@ void CWeaponCSBaseGun::PrimaryAttack()
 
 	// Does this gun unzoom after a shot, as in a bolt action rifle?
 	bool bUnzoomAfterShot = DoesUnzoomAfterShot();
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Keep the AWP at its first zoom level until the player unscopes.
 	if ( GetCSWeaponID() == WEAPON_AWP )
 		bUnzoomAfterShot = false;
@@ -387,7 +387,7 @@ void CWeaponCSBaseGun::SecondaryAttack()
 	if ( HasZoom() )
 	{
 		int nZoomLevels = GetZoomLevels();
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 		// The Mac AWP cycles between unscoped and first zoom only.
 		if ( GetCSWeaponID() == WEAPON_AWP )
 			nZoomLevels = MIN( nZoomLevels, 1 );

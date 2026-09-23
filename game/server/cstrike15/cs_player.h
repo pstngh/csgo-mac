@@ -1012,12 +1012,18 @@ public:
 	bool IsInBuyPeriod();
 	bool CanBuyDuringImmunity();
 	bool CanPlayerBuy( bool display );
+#if defined( USE_MAC_PRESET )
+	// The Mac preset's perks apply only to the player hosting a local listen server.
+	bool IsLocalListenServerHost() const;
+#endif
 
 	CNetworkVar( bool, m_bInHostageRescueZone );
 	void RescueZoneTouch( inputdata_t &inputdata );
 
 	CNetworkVar( float, m_flStamina );
+#if defined( USE_MAC_PRESET )
 	CNetworkVar( float, m_flLeanAngle );
+#endif
 	CNetworkVar( int, m_iDirection );	// The current lateral kicking direction; 1 = right,  0 = left
 	CNetworkVar( int, m_iShotsFired );	// number of shots fired recently (seems inconsistent, based on specific weapons incrementing this value)
 	CNetworkVar( int, m_nNumFastDucks );  // UNUSED.  Kept for backwards demo compatibility.  $$$REI TODO: Investigate safely removing variables

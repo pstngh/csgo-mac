@@ -329,7 +329,7 @@ bool RkHudBuyMenu::ShouldDraw()
     // This element is opened/closed by clientside events
     // that we listen for and set m_bVisible manually via showpanel(true)
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
     if( engine->IsClientLocalToActiveServer() )
         return m_bVisible;
 #endif

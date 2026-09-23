@@ -251,7 +251,7 @@ bool CSNavMesh::Save( void ) const
 
 NavErrorType CSNavMesh::PostLoad( unsigned int version )
 {
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	m_desiredChickenCount = 0;
 #else
 	if ( CSGameRules()->IsPlayingGunGameDeathmatch() )

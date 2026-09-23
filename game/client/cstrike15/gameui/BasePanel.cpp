@@ -1253,7 +1253,7 @@ void CBaseModPanel::OnLevelLoadingFinished()
 		GetViewPortInterface()->ShowPanel( PANEL_ALL, false );
 		GetViewPortInterface()->UpdateAllPanels();
 	}
-#if defined( INCLUDE_ROCKETUI ) && defined( OSX )
+#if defined( INCLUDE_ROCKETUI ) && defined( USE_MAC_PRESET )
 	// Opening the team menu here removes the extra Continue click after a map loads.
 	RocketLoadingScreenDocument::ShowPanel( false );
 #endif

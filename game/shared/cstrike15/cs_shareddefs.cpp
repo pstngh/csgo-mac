@@ -11,7 +11,7 @@
 // NOTE: This has to be the last file included!
 #include "tier0/memdbgon.h"
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 // Allied Assault multiplayer: sv_runspeed 250 * sv_dmspeedmult 1.1.
 const float CS_PLAYER_SPEED_RUN				= 275.0f;
 #else
@@ -23,7 +23,7 @@ const float CS_PLAYER_SPEED_HAS_HOSTAGE		= 200.0f;
 const float CS_PLAYER_SPEED_STOPPED			=   1.0f;
 const float CS_PLAYER_SPEED_OBSERVER		= 900.0f;
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 const float CS_PLAYER_SPEED_DUCK_MODIFIER	= 0.6f;
 const float CS_PLAYER_SPEED_WALK_MODIFIER	= 0.6f;
 #else

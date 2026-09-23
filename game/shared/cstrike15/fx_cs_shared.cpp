@@ -417,7 +417,7 @@ void FX_FireBullets(
 
 	RandomSeed( iSeed );	// init random system with this seed
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// Keep the Negev on its first-shot spread curve throughout a spray.
 	flRecoilIndex = 0.0f;
 #endif

@@ -211,15 +211,18 @@ Vector CCSPlayer::Weapon_ShootPosition()
 		m_PlayerAnimStateCSGO->ModifyEyePosition( vecPos );
 	}
 
+#if defined( USE_MAC_PRESET )
 	if ( m_flLeanAngle != 0.0f )
 	{
 		const Vector desired = vecPos + CS_AALeanEyeOffset( EyeAngles(), m_flLeanAngle );
 		vecPos = CS_AALeanTraceEye( this, vecPos, desired );
 	}
+#endif
 
 	return vecPos;
 }
 
+#if defined( USE_MAC_PRESET )
 float CS_AdvanceAALean( float angle, int buttons, float frameTime )
 {
 	// Allied Assault-inspired 40-degree limit, 10/s lean response, and
@@ -264,13 +267,19 @@ Vector CS_AALeanTraceEye( CBaseEntity *player, const Vector &start, const Vector
 	return lateralTrace.endpos;
 }
 
-#if defined( OSX )
-static bool MacIsLocalListenServerPlayer( const CCSPlayer *pPlayer )
+float CS_AAWeaponMaxSpeed( int weaponId )
+{
+	// Allied Assault deathmatch uses 0.8 movement for its sniper rifles and
+	// the full run speed for every other weapon.
+	return weaponId == WEAPON_AWP ? CS_PLAYER_SPEED_RUN * 0.8f : CS_PLAYER_SPEED_RUN;
+}
+
+bool CCSPlayer::IsLocalListenServerHost() const
 {
 #if defined( CLIENT_DLL )
-	return engine->IsClientLocalToActiveServer() && pPlayer == C_CSPlayer::GetLocalCSPlayer();
+	return engine->IsClientLocalToActiveServer() && this == C_CSPlayer::GetLocalCSPlayer();
 #else
-	return !engine->IsDedicatedServer() && pPlayer == UTIL_GetLocalPlayerOrListenServerHost();
+	return !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost();
 #endif
 }
 #endif
@@ -423,12 +432,9 @@ float CCSPlayer::GetPlayerMaxSpeed()
 			else
 			{
 				float weaponSpeed = pWeapon->GetMaxSpeed();
-#if defined( OSX )
-				// Allied Assault deathmatch uses 0.8 movement for its sniper rifles.
-				// Other weapons use the full AA run speed in this local preset.
-				if ( MacIsLocalListenServerPlayer( this ) )
-					weaponSpeed = pWeapon->GetCSWeaponID() == WEAPON_AWP ?
-						CS_PLAYER_SPEED_RUN * 0.8f : CS_PLAYER_SPEED_RUN;
+#if defined( USE_MAC_PRESET )
+				if ( IsLocalListenServerHost() )
+					weaponSpeed = CS_AAWeaponMaxSpeed( pWeapon->GetCSWeaponID() );
 #endif
 				speed = MIN( weaponSpeed, speed );
 			}
@@ -965,10 +971,10 @@ bool CCSPlayer::CanPlayerBuy( bool display )
 		return false;
 	}
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 	// The local Mac host can buy throughout a live round, regardless of
 	// buy zone, timer, warmup, team lock or game-mode buy restrictions.
-	if ( MacIsLocalListenServerPlayer( this ) )
+	if ( IsLocalListenServerHost() )
 		return true;
 #endif
 
@@ -2535,7 +2541,7 @@ void CCSPlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigi
 	BaseClass::UpdateStepSound( psurface, vecOrigin, vecVelocity  );
 }
 
-#if defined( OSX )
+#if defined( USE_MAC_PRESET )
 ConVar weapon_recoil_view_punch_extra( "weapon_recoil_view_punch_extra", "0", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Additional (non-aim) punch added to view from recoil" );
 #else
 ConVar weapon_recoil_view_punch_extra( "weapon_recoil_view_punch_extra", "0.055", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Additional (non-aim) punch added to view from recoil" );
@@ -2800,10 +2806,12 @@ AcquireResult::Type CCSPlayer::CanAcquire( CSWeaponID weaponId, AcquireMethod::T
 
 	if ( pWeaponInfo == NULL )
 		return AcquireResult::InvalidItem;
+#if defined( USE_MAC_PRESET )
 	// Exclude grenades, C4, and knives from buys and pickups for everyone.
 	if ( pWeaponInfo->GetWeaponType( pItem ) == WEAPONTYPE_GRENADE || weaponId == WEAPON_C4 ||
 		( pWeaponInfo->GetWeaponType( pItem ) == WEAPONTYPE_KNIFE && weaponId != WEAPON_TASER ) )
 		return AcquireResult::NotAllowedByProhibition;
+#endif
 
 	AcquireResult::Type nGamerulesResult = CSGameRules()->IsWeaponAllowed( pWeaponInfo, GetTeamNumber(), pItem );
 	if ( nGamerulesResult != AcquireResult::Allowed )

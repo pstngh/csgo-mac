@@ -27,12 +27,20 @@ public:
         if( id == "team_ct" )
         {
             RocketTeamMenuDocument::ShowPanel( false );
+#if defined( USE_MAC_PRESET )
             engine->ClientCmd_Unrestricted("jointeam 3 1");
+#else
+            engine->ClientCmd_Unrestricted("jointeam 3");
+#endif
         }
         else if( id == "team_t" )
         {
             RocketTeamMenuDocument::ShowPanel( false );
+#if defined( USE_MAC_PRESET )
             engine->ClientCmd_Unrestricted("jointeam 2 1");
+#else
+            engine->ClientCmd_Unrestricted("jointeam 2");
+#endif
         }
         else if( id == "team_spec" )
         {
