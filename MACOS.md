@@ -68,6 +68,8 @@ Standalone listen servers intentionally fall back to LAN mode when Steam service
 
 Backtick opens the developer console. The Mac gameplay preset locks the normal world FOV to 80, the saved Desktop-preset weapon viewmodel FOV of 60, mouse sensitivity to 1.029863, and `m_pitch` to 0.018. The persistent in-game HUD is crosshair-only; the sniper scope overlay and deliberately opened buy/team menus remain available. Sniper rifles keep a static crosshair while unscoped; the scope uses its own reticle. The AWP cycles between unscoped and its first zoom level only and stays scoped after firing. The scroll wheel cycles weapons without showing a selection HUD. The default CT M4 slot uses the silenced M4A1-S from the legally acquired game content.
 
+Use `drawviewmodel 0` to hide the first-person weapon and hands, `drawviewmodel 1` to show only the weapon, or `drawviewmodel 2` for the normal weapon-and-hands view. The default is 2, and the setting is saved.
+
 For the local listen-server host, the preset keeps `sv_cheats` enabled, god mode active, hit-tagging slowdown disabled, the account at the server's maximum balance, and the active weapon's clip full. These server-side benefits do not override a remote server's rules or apply to bots and other players. A remote server may also impose its own mouse-pitch limit. The preset is compiled into this Mac build rather than stored in `config.cfg`; editing that file will not change the local locked values.
 
 ## Status

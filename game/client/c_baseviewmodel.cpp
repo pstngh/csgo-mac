@@ -58,6 +58,9 @@ ConVar vm_pointer_pitch_up_scale( "vm_pointer_pitch_up_scale", "0.25", FCVAR_DEV
 void PostToolMessage( HTOOLHANDLE hEntity, KeyValues *msg );
 extern float g_flMuzzleFlashScale;
 extern ConVar r_drawviewmodel;
+#if defined( OSX ) && defined( CSTRIKE15 )
+extern ConVar drawviewmodel;
+#endif
 extern ConVar cl_righthand;
 
 ConVar mat_preview( "mat_preview", "", FCVAR_CLIENTDLL | FCVAR_CHEAT );
@@ -194,6 +197,9 @@ void C_BaseViewModel::UpdateParticles( int nSlot )
 
 	bool shouldDrawPlayer = ( pPlayer->GetPlayerRenderMode( nSlot ) == PLAYER_RENDER_THIRDPERSON );
 	bool visible = r_drawviewmodel.GetBool() && pPlayer && !shouldDrawPlayer;
+#if defined( OSX ) && defined( CSTRIKE15 )
+	visible = visible && drawviewmodel.GetInt() != 0;
+#endif
 
 	if ( visible && iWeaponId == WEAPON_MOLOTOV )
 	{
@@ -769,6 +775,11 @@ int C_BaseViewModel::DrawModel( int flags, const RenderableInstance_t &instance 
 #endif
 		)
 	{
+		// Hands and sleeves are separate attachments from the weapon model.
+		// Keep weapon stickers and other weapon add-ons in weapon-only mode.
+#if defined( OSX ) && defined( CSTRIKE15 )
+		if ( drawviewmodel.GetInt() == 2 )
+#endif
 		FOR_EACH_VEC( m_vecViewmodelArmModels, i )
 		{
 			if ( m_vecViewmodelArmModels[i] )

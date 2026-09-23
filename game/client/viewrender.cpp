@@ -114,6 +114,19 @@ static ConVar r_drawtranslucentworld( "r_drawtranslucentworld", "1", FCVAR_CHEAT
 static ConVar r_3dsky( "r_3dsky","1", 0, "Enable the rendering of 3d sky boxes" );
 static ConVar r_skybox( "r_skybox","1", FCVAR_CHEAT, "Enable the rendering of sky boxes" );
 ConVar r_drawviewmodel( "r_drawviewmodel","1", FCVAR_CHEAT );
+#if defined( OSX ) && defined( CSTRIKE15 )
+static void ValidateMacDrawViewmodel( IConVar *pVar, const char *, float )
+{
+	ConVarRef var( pVar );
+	const int nMode = clamp( var.GetInt(), 0, 2 );
+	const char *pModes[] = { "0", "1", "2" };
+	if ( V_strcmp( var.GetString(), pModes[nMode] ) )
+		var.SetValue( nMode );
+}
+ConVar drawviewmodel( "drawviewmodel", "2", FCVAR_ARCHIVE,
+	"0: hide weapon and hands; 1: show weapon only; 2: show weapon and hands.",
+	true, 0, true, 2, ValidateMacDrawViewmodel );
+#endif
 static ConVar r_drawtranslucentrenderables( "r_drawtranslucentrenderables", "1", FCVAR_CHEAT );
 static ConVar r_drawopaquerenderables( "r_drawopaquerenderables", "1", FCVAR_CHEAT );
 
@@ -1394,6 +1407,11 @@ bool CViewRender::ShouldDrawViewModel( bool bDrawViewmodel )
 
 	if ( !r_drawviewmodel.GetBool() )
 		return false;
+
+#if defined( OSX ) && defined( CSTRIKE15 )
+	if ( drawviewmodel.GetInt() == 0 )
+		return false;
+#endif
 
 	ASSERT_LOCAL_PLAYER_RESOLVABLE();
 
