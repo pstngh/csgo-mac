@@ -601,6 +601,7 @@ public:
 	// Global/static methods
 	virtual void ThirdPersonSwitch( bool bThirdperson );
 	virtual void CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, float &zFar, float &fov );
+	virtual void CalcViewModelView( const Vector &eyeOrigin, const QAngle &eyeAngles );
 
 public:
 
@@ -685,6 +686,7 @@ public:
 	CNetworkVar( float, m_flProgressBarStartTime );
 
 	CNetworkVar( float, m_flStamina );
+	CNetworkVar( float, m_flLeanAngle );
 	CNetworkVar( int, m_iDirection );	// The current lateral kicking direction; 1 = right,  0 = left
 	CNetworkVar( int, m_iShotsFired );	// number of shots fired recently
 	CNetworkVar( int, m_nNumFastDucks ); // UNUSED.  Kept for backwards demo compatibility.  $$$REI TODO: Investigate safely removing variables

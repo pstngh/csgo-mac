@@ -58,9 +58,18 @@ ConVar lookstrafe( "lookstrafe", "0", FCVAR_ARCHIVE );
 #define MAX_LINEAR_SPEED "450"
 #endif
 
+#if defined( OSX ) && !defined( PORTAL2 )
+// AA applies 0.85 strafe and 0.8 backward input multipliers.
+ConVar cl_sidespeed( "cl_sidespeed", "382.5", FCVAR_CHEAT );
+#else
 ConVar cl_sidespeed( "cl_sidespeed", MAX_LINEAR_SPEED, FCVAR_CHEAT );
+#endif
 ConVar cl_forwardspeed( "cl_forwardspeed", MAX_LINEAR_SPEED, FCVAR_CHEAT );
+#if defined( OSX ) && !defined( PORTAL2 )
+ConVar cl_backspeed( "cl_backspeed", "360", FCVAR_CHEAT );
+#else
 ConVar cl_backspeed( "cl_backspeed", MAX_LINEAR_SPEED, FCVAR_CHEAT );
+#endif
 
 void IN_JoystickChangedCallback_f( IConVar *pConVar, const char *pOldString, float flOldValue );
 ConVar in_joystick( "joystick", "1", FCVAR_ARCHIVE, "True if the joystick is enabled, false otherwise.", true, 0.0f, true, 1.0f, IN_JoystickChangedCallback_f );
@@ -142,6 +151,11 @@ kbutton_t	in_forward;
 kbutton_t	in_back;
 kbutton_t	in_moveleft;
 kbutton_t	in_moveright;
+
+// Nullbind-style SOCD: the most recently pressed key wins while both
+// opposite movement keys are physically held.
+static int s_lastForwardBackPressed[ MAX_SPLITSCREEN_PLAYERS ];
+static int s_lastLeftRightPressed[ MAX_SPLITSCREEN_PLAYERS ];
 // Display the netgraph
 kbutton_t	in_graph;  
 kbutton_t	in_joyspeed;		// auto-speed key from the joystick (only works for player movement, not vehicles)
@@ -489,6 +503,16 @@ void KeyUp( kbutton_t *b, const char *c )
 	data.state |= 4; 		// impulse up
 }
 
+#if defined( OSX )
+static void SOCDKeyDown( kbutton_t *key, const char *keyCode, int *lastPressed, int direction )
+{
+	const bool wasDown = ( key->GetPerUser().state & 1 ) != 0;
+	KeyDown( key, keyCode );
+	if ( !wasDown && ( key->GetPerUser().state & 1 ) )
+		lastPressed[ GET_ACTIVE_SPLITSCREEN_SLOT() ] = direction;
+}
+#endif
+
 void IN_ClearDuckToggle()
 {
 	if ( ::input->KeyState( &in_ducktoggle ) )
@@ -528,17 +552,45 @@ void IN_LeftDown( const CCommand &args ) {KeyDown(&in_left, args[1] );}
 void IN_LeftUp( const CCommand &args ) {KeyUp(&in_left, args[1] );}
 void IN_RightDown( const CCommand &args ) {KeyDown(&in_right, args[1] );}
 void IN_RightUp( const CCommand &args ) {KeyUp(&in_right, args[1] );}
-void IN_ForwardDown( const CCommand &args ) {KeyDown(&in_forward, args[1] );}
+void IN_ForwardDown( const CCommand &args )
+{
+#if defined( OSX )
+	SOCDKeyDown( &in_forward, args[1], s_lastForwardBackPressed, 1 );
+#else
+	KeyDown( &in_forward, args[1] );
+#endif
+}
 void IN_ForwardUp( const CCommand &args ) {KeyUp(&in_forward, args[1] );}
-void IN_BackDown( const CCommand &args ) {KeyDown(&in_back, args[1] );}
+void IN_BackDown( const CCommand &args )
+{
+#if defined( OSX )
+	SOCDKeyDown( &in_back, args[1], s_lastForwardBackPressed, -1 );
+#else
+	KeyDown( &in_back, args[1] );
+#endif
+}
 void IN_BackUp( const CCommand &args ) {KeyUp(&in_back, args[1] );}
 void IN_LookupDown( const CCommand &args ) {KeyDown(&in_lookup, args[1] );}
 void IN_LookupUp( const CCommand &args ) {KeyUp(&in_lookup, args[1] );}
 void IN_LookdownDown( const CCommand &args ) {KeyDown(&in_lookdown, args[1] );}
 void IN_LookdownUp( const CCommand &args ) {KeyUp(&in_lookdown, args[1] );}
-void IN_MoveleftDown( const CCommand &args ) {KeyDown(&in_moveleft, args[1] );}
+void IN_MoveleftDown( const CCommand &args )
+{
+#if defined( OSX )
+	SOCDKeyDown( &in_moveleft, args[1], s_lastLeftRightPressed, -1 );
+#else
+	KeyDown( &in_moveleft, args[1] );
+#endif
+}
 void IN_MoveleftUp( const CCommand &args ) {KeyUp(&in_moveleft, args[1] );}
-void IN_MoverightDown( const CCommand &args ) {KeyDown(&in_moveright, args[1] );}
+void IN_MoverightDown( const CCommand &args )
+{
+#if defined( OSX )
+	SOCDKeyDown( &in_moveright, args[1], s_lastLeftRightPressed, 1 );
+#else
+	KeyDown( &in_moveright, args[1] );
+#endif
+}
 void IN_MoverightUp( const CCommand &args ) {KeyUp(&in_moveright, args[1] );}
 void IN_StrafeDown( const CCommand &args ) {KeyDown(&in_strafe, args[1] );}
 void IN_StrafeUp( const CCommand &args ) {KeyUp(&in_strafe, args[1] );}
@@ -1042,6 +1094,23 @@ void CInput::AdjustAngles ( int nSlot, float frametime )
 	engine->SetViewAngles( viewangles );
 }
 
+static float SOCDMovementKeyState( CInput *input, kbutton_t *key, kbutton_t *opposite,
+	int nSlot, int lastPressed, int direction )
+{
+	const float value = input->KeyState( key );
+#if defined( OSX )
+	if ( ( key->GetPerUser( nSlot ).state & 1 ) &&
+		( opposite->GetPerUser( nSlot ).state & 1 ) && lastPressed != direction )
+		return 0.0f;
+#else
+	(void)opposite;
+	(void)nSlot;
+	(void)lastPressed;
+	(void)direction;
+#endif
+	return value;
+}
+
 /*
 ==============================
 ComputeSideMove
@@ -1068,10 +1137,10 @@ void CInput::ComputeSideMove( int nSlot, CUserCmd *cmd )
 		float ideal_sin = sin(DEG2RAD(ideal_yaw));
 		float ideal_cos = cos(DEG2RAD(ideal_yaw));
 		
-		float movement = ideal_cos*KeyState(&in_moveright)
-			+  ideal_sin*KeyState(&in_back)
-			+ -ideal_cos*KeyState(&in_moveleft)
-			+ -ideal_sin*KeyState(&in_forward);
+		float movement = ideal_cos*SOCDMovementKeyState( this, &in_moveright, &in_moveleft, nSlot, s_lastLeftRightPressed[ nSlot ], 1 )
+			+  ideal_sin*SOCDMovementKeyState( this, &in_back, &in_forward, nSlot, s_lastForwardBackPressed[ nSlot ], -1 )
+			+ -ideal_cos*SOCDMovementKeyState( this, &in_moveleft, &in_moveright, nSlot, s_lastLeftRightPressed[ nSlot ], -1 )
+			+ -ideal_sin*SOCDMovementKeyState( this, &in_forward, &in_back, nSlot, s_lastForwardBackPressed[ nSlot ], 1 );
 
 		cmd->sidemove += cl_sidespeed.GetFloat() * movement;
 
@@ -1086,8 +1155,8 @@ void CInput::ComputeSideMove( int nSlot, CUserCmd *cmd )
 	}
 
 	// Otherwise, check strafe keys
-	cmd->sidemove += cl_sidespeed.GetFloat() * KeyState (&in_moveright);
-	cmd->sidemove -= cl_sidespeed.GetFloat() * KeyState (&in_moveleft);
+	cmd->sidemove += cl_sidespeed.GetFloat() * SOCDMovementKeyState( this, &in_moveright, &in_moveleft, nSlot, s_lastLeftRightPressed[ nSlot ], 1 );
+	cmd->sidemove -= cl_sidespeed.GetFloat() * SOCDMovementKeyState( this, &in_moveleft, &in_moveright, nSlot, s_lastLeftRightPressed[ nSlot ], -1 );
 }
 
 /*
@@ -1114,10 +1183,10 @@ void CInput::ComputeForwardMove( int nSlot, CUserCmd *cmd )
 	if ( CAM_IsThirdPerson() && thirdperson_platformer.GetInt() )
 	{
 		// movement is always forward in this mode
-		float movement = KeyState(&in_forward)
-			|| KeyState(&in_moveright)
-			|| KeyState(&in_back)
-			|| KeyState(&in_moveleft);
+		float movement = SOCDMovementKeyState( this, &in_forward, &in_back, nSlot, s_lastForwardBackPressed[ nSlot ], 1 )
+			|| SOCDMovementKeyState( this, &in_moveright, &in_moveleft, nSlot, s_lastLeftRightPressed[ nSlot ], 1 )
+			|| SOCDMovementKeyState( this, &in_back, &in_forward, nSlot, s_lastForwardBackPressed[ nSlot ], -1 )
+			|| SOCDMovementKeyState( this, &in_moveleft, &in_moveright, nSlot, s_lastLeftRightPressed[ nSlot ], -1 );
 
 		cmd->forwardmove += cl_forwardspeed.GetFloat() * movement;
 
@@ -1135,10 +1204,10 @@ void CInput::ComputeForwardMove( int nSlot, CUserCmd *cmd )
 		float ideal_sin = sin(DEG2RAD(ideal_yaw));
 		float ideal_cos = cos(DEG2RAD(ideal_yaw));
 		
-		float movement = ideal_cos*KeyState(&in_forward)
-			+  ideal_sin*KeyState(&in_moveright)
-			+ -ideal_cos*KeyState(&in_back)
-			+ -ideal_sin*KeyState(&in_moveleft);
+		float movement = ideal_cos*SOCDMovementKeyState( this, &in_forward, &in_back, nSlot, s_lastForwardBackPressed[ nSlot ], 1 )
+			+  ideal_sin*SOCDMovementKeyState( this, &in_moveright, &in_moveleft, nSlot, s_lastLeftRightPressed[ nSlot ], 1 )
+			+ -ideal_cos*SOCDMovementKeyState( this, &in_back, &in_forward, nSlot, s_lastForwardBackPressed[ nSlot ], -1 )
+			+ -ideal_sin*SOCDMovementKeyState( this, &in_moveleft, &in_moveright, nSlot, s_lastLeftRightPressed[ nSlot ], -1 );
 
 		cmd->forwardmove += cl_forwardspeed.GetFloat() * movement;
 
@@ -1147,8 +1216,8 @@ void CInput::ComputeForwardMove( int nSlot, CUserCmd *cmd )
 
 	if ( !(in_klook.GetPerUser( nSlot ).state & 1 ) )
 	{	
-		cmd->forwardmove += cl_forwardspeed.GetFloat() * KeyState (&in_forward);
-		cmd->forwardmove -= cl_backspeed.GetFloat() * KeyState (&in_back);
+		cmd->forwardmove += cl_forwardspeed.GetFloat() * SOCDMovementKeyState( this, &in_forward, &in_back, nSlot, s_lastForwardBackPressed[ nSlot ], 1 );
+		cmd->forwardmove -= cl_backspeed.GetFloat() * SOCDMovementKeyState( this, &in_back, &in_forward, nSlot, s_lastForwardBackPressed[ nSlot ], -1 );
 	}	
 }
 
@@ -1789,6 +1858,15 @@ int CInput::GetButtonBits( bool bResetState )
 	CalcButtonBits( nSlot, bits, IN_RIGHT, ignore, &in_right, bResetState );
 	CalcButtonBits( nSlot, bits, IN_MOVELEFT, ignore, &in_moveleft, bResetState );
 	CalcButtonBits( nSlot, bits, IN_MOVERIGHT, ignore, &in_moveright, bResetState );
+#if defined( OSX )
+	// Send only the winning direction to prediction and the server.
+	if ( ( in_forward.GetPerUser( nSlot ).state & 1 ) && ( in_back.GetPerUser( nSlot ).state & 1 ) )
+		bits &= ~( s_lastForwardBackPressed[ nSlot ] > 0 ? IN_BACK :
+			s_lastForwardBackPressed[ nSlot ] < 0 ? IN_FORWARD : IN_FORWARD | IN_BACK );
+	if ( ( in_moveleft.GetPerUser( nSlot ).state & 1 ) && ( in_moveright.GetPerUser( nSlot ).state & 1 ) )
+		bits &= ~( s_lastLeftRightPressed[ nSlot ] > 0 ? IN_MOVELEFT :
+			s_lastLeftRightPressed[ nSlot ] < 0 ? IN_MOVERIGHT : IN_MOVELEFT | IN_MOVERIGHT );
+#endif
 	CalcButtonBits( nSlot, bits, IN_ATTACK2, ignore, &in_attack2, bResetState );
 	CalcButtonBits( nSlot, bits, IN_RELOAD, ignore, &in_reload, bResetState );
 	CalcButtonBits( nSlot, bits, IN_ALT1, ignore, &in_alt1, bResetState );
@@ -1973,6 +2051,12 @@ static ConCommand startalt1("+alt1", IN_Alt1Down);
 static ConCommand endalt1("-alt1", IN_Alt1Up);
 static ConCommand startalt2("+alt2", IN_Alt2Down);
 static ConCommand endalt2("-alt2", IN_Alt2Up);
+#if defined( CSTRIKE15 )
+static ConCommand startleanleft("+leanleft", IN_Alt1Down);
+static ConCommand endleanleft("-leanleft", IN_Alt1Up);
+static ConCommand startleanright("+leanright", IN_Alt2Down);
+static ConCommand endleanright("-leanright", IN_Alt2Up);
+#endif
 static ConCommand startscore("+score", IN_ScoreDown);
 static ConCommand endscore("-score", IN_ScoreUp);
 static ConCommand startshowscores("+showscores", IN_ScoreDown);
@@ -2099,4 +2183,3 @@ void CInput::LevelInit( void )
 	}
 #endif
 }
-

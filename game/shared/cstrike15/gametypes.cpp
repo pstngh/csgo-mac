@@ -45,8 +45,13 @@ void DisplayGameModeConvars( void );
 // The following convars depend on the order of the game types and modes in GameModes.txt.
 ConVar game_online( "game_online", "1", FCVAR_REPLICATED | FCVAR_HIDDEN | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "The current game is online." );
 ConVar game_public( "game_public", "1", FCVAR_REPLICATED | FCVAR_HIDDEN | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "The current game is public." );
+#if defined( OSX )
+ConVar game_type( "game_type", "1", FCVAR_REPLICATED | FCVAR_RELEASE | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "The current game type. See GameModes.txt." );
+ConVar game_mode( "game_mode", "2", FCVAR_REPLICATED | FCVAR_RELEASE | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "The current game mode (based on game type). See GameModes.txt." );
+#else
 ConVar game_type( "game_type", "0", FCVAR_REPLICATED | FCVAR_RELEASE | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "The current game type. See GameModes.txt." );
 ConVar game_mode( "game_mode", "0", FCVAR_REPLICATED | FCVAR_RELEASE | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "The current game mode (based on game type). See GameModes.txt." );
+#endif
 ConVar custom_bot_difficulty( "custom_bot_difficulty", "0", FCVAR_REPLICATED | FCVAR_RELEASE | FCVAR_GAMEDLL | FCVAR_CLIENTDLL, "Bot difficulty for offline play." );
 
 #if defined( CLIENT_DLL )

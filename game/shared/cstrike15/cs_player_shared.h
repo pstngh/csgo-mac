@@ -1,6 +1,11 @@
 #if !defined CS_PLAYER_SHARED_H
 #define CS_PLAYER_SHARED_H
 
+// Allied Assault multiplayer lean, shared by client prediction and server movement.
+float CS_AdvanceAALean( float leanAngle, int buttons, float frameTime );
+Vector CS_AALeanEyeOffset( const QAngle &viewAngles, float leanAngle );
+Vector CS_AALeanTraceEye( CBaseEntity *player, const Vector &start, const Vector &desired );
+
 // 
 // Configuration for using high priority entities by CS players
 //

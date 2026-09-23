@@ -195,7 +195,11 @@ ConVar cl_show_clan_in_death_notice("cl_show_clan_in_death_notice", "1", FCVAR_C
 //ConVar cl_violent_ragdolls( "cl_violent_ragdolls", "1", FCVAR_RELEASE, "Allows ragdolls to bleed out and react to gun shots.");
 #define USE_VIOLENT_RAGDOLLS 0
 
+#if defined( OSX )
+ConVar cl_dm_buyrandomweapons( "cl_dm_buyrandomweapons", "0", FCVAR_CLIENTDLL | FCVAR_RELEASE | FCVAR_ARCHIVE, "Player will automatically receive a random weapon on spawn in deathmatch if this is set to 1 (otherwise, they will receive the last weapon)" );
+#else
 ConVar cl_dm_buyrandomweapons( "cl_dm_buyrandomweapons", "1", FCVAR_CLIENTDLL | FCVAR_RELEASE | FCVAR_ARCHIVE, "Player will automatically receive a random weapon on spawn in deathmatch if this is set to 1 (otherwise, they will receive the last weapon)" );
+#endif
 
 ConVar cl_teammate_colors_show( "cl_teammate_colors_show", "1", FCVAR_CLIENTDLL | FCVAR_RELEASE | FCVAR_ARCHIVE, "In competitive, 1 = show teammates as separate colors in the radar, scoreboard, etc., 2 = show colors and letters" );
 ConVar cl_hud_playercount_pos( "cl_hud_playercount_pos", "0", FCVAR_CLIENTDLL | FCVAR_RELEASE | FCVAR_ARCHIVE, "0 = default (top), 1 = bottom" );
@@ -536,6 +540,7 @@ BEGIN_PREDICTION_DATA( C_CSPlayer )
 	DEFINE_PRED_FIELD( m_bShieldDrawn, FIELD_BOOLEAN, FTYPEDESC_INSENDTABLE ),
 #endif
 	DEFINE_PRED_FIELD_TOL( m_flStamina, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.1f ),
+	DEFINE_PRED_FIELD( m_flLeanAngle, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
 	DEFINE_PRED_FIELD( m_flCycle, FIELD_FLOAT, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE | FTYPEDESC_NOERRORCHECK ),
 	DEFINE_PRED_FIELD( m_iShotsFired, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),   
 	DEFINE_PRED_FIELD( m_iDirection, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),   
@@ -1489,6 +1494,7 @@ IMPLEMENT_CLIENTCLASS_DT( C_CSPlayer, DT_CSPlayer, CCSPlayer )
 	
 	RecvPropFloat( RECVINFO( m_angEyeAngles[0] ) ),
 	RecvPropFloat( RECVINFO( m_angEyeAngles[1] ) ),
+	RecvPropFloat( RECVINFO( m_flLeanAngle ) ),
 
 	RecvPropInt( RECVINFO( m_iAddonBits ) ),
 	RecvPropInt( RECVINFO( m_iPrimaryAddon ) ),
@@ -1631,6 +1637,7 @@ C_CSPlayer::C_CSPlayer() :
 	m_bCanMoveDuringFreezePeriod = false;
 
 	m_flThirdpersonRecoil = 0;
+	m_flLeanAngle = 0.0f;
 
 	m_angEyeAngles.Init();
 
@@ -3627,6 +3634,7 @@ void C_CSPlayer::AnimateGlows( void )
 void C_CSPlayer::Spawn( void )
 {
 	m_flLastSpawnTimeIndex = gpGlobals->curtime;
+	m_flLeanAngle = 0.0f;
 
 #if defined( USE_PLAYER_ATTRIBUTE_MANAGER )
 	m_AttributeManager.SetPlayer( this );
@@ -4234,6 +4242,14 @@ void C_CSPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, f
 		}
 	}
 
+	if ( IsLocalPlayer() && IsAlive() && !::input->CAM_IsThirdPerson() && m_flLeanAngle != 0.0f )
+	{
+		const Vector desired = eyeOrigin + CS_AALeanEyeOffset( eyeAngles, m_flLeanAngle );
+		eyeOrigin = CS_AALeanTraceEye( this, EyePosition(), desired );
+		// AA adds 0.1 in CG_CalcViewValues and 0.3 in CG_OffsetFirstPersonView.
+		eyeAngles[ROLL] += m_flLeanAngle * 0.4f;
+	}
+
 #ifdef IRONSIGHT
 	CWeaponCSBase *pWeapon = GetActiveCSWeapon();
 	if (pWeapon)
@@ -4248,6 +4264,21 @@ void C_CSPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, f
 #endif //IRONSIGHT}
 
 	Assert( eyeAngles.IsValid() && eyeOrigin.IsValid() );
+}
+
+void C_CSPlayer::CalcViewModelView( const Vector &eyeOrigin, const QAngle &eyeAngles )
+{
+	if ( m_flLeanAngle == 0.0f || !IsAlive() || ::input->CAM_IsThirdPerson() )
+	{
+		BaseClass::CalcViewModelView( eyeOrigin, eyeAngles );
+		return;
+	}
+
+	Vector up;
+	AngleVectors( eyeAngles, NULL, NULL, &up );
+	// CalcViewModelView receives the camera's already leaned origin and angles.
+	// AA additionally lowers its viewmodel as the lean grows.
+	BaseClass::CalcViewModelView( eyeOrigin - up * ( fabsf( m_flLeanAngle ) * 0.1f ), eyeAngles );
 }
 
 #define	MP_TAUNT_PITCH	0
@@ -5101,6 +5132,12 @@ void C_CSPlayer::ClientThink()
 	// Otherwise buy random or get previous round's gear, depending on cl_dm_buyrandomweapons.
 	if ( m_bShouldAutobuyDMWeapons )
 	{
+#if defined( OSX )
+		// The local Mac spawn already receives its fixed USP-S, rifle, and AWP.
+		// Deathmatch's later auto-buy would replace the pistol and rifle.
+		cl_dm_buyrandomweapons.SetValue( 0 );
+		m_bShouldAutobuyDMWeapons = false;
+#else
 		if ( this == GetLocalPlayer() && IsAlive() && (GetTeamNumber() == TEAM_CT || GetTeamNumber() == TEAM_TERRORIST) )
 		{
 			if ( cl_dm_buyrandomweapons.GetBool() )
@@ -5120,6 +5157,7 @@ void C_CSPlayer::ClientThink()
 
 			m_bShouldAutobuyDMWeapons = false;
 		}
+#endif
 	}
 
 	//=============================================================================
@@ -8301,16 +8339,7 @@ bool C_CSPlayer::IsCursorOnAutoAimTarget()
 
 bool C_CSPlayer::CanUseGrenade( CSWeaponID nID )
 {
-	if ( nID == WEAPON_MOLOTOV || nID == WEAPON_INCGRENADE )
-	{
-		if ( gpGlobals->curtime < m_fMolotovUseTime )
-		{
-			// Can't use molotov until timer elapses
-			return false;
-		}
-	}
-
-	return true;
+	return false;
 }
 
 void C_CSPlayer::DisplayInventory( bool showPistol )

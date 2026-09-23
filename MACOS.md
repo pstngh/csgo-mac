@@ -50,6 +50,20 @@ This repository does not contain Valve game assets. Follow the upstream acquisit
 
 RocketUI also needs the separate [Kisak-Strike-Files](https://github.com/SwagSoftware/Kisak-Strike-Files) GUI files. Copy that repository's `csgo/rocketui` directory into `../game/csgo/rocketui` before launching. Without it, the team-selection and pause menus cannot render.
 
+To use the AK-47 Asiimov finish, supply its `ak47_asiimov.vtf` from legally acquired CS:GO content and run:
+
+```sh
+python3 tools/install_ak_asiimov.py /path/to/ak47_asiimov.vtf ../game
+```
+
+To use the original Allied Assault sniper scope graphic, supply `textures/hud/zoomoverlay.tga` from a legally acquired MOHAA installation and run:
+
+```sh
+python3 tools/install_mohaa_scope.py /path/to/zoomoverlay.tga ../game
+```
+
+These scripts install assets only in the local game directory. Neither game's texture files are committed to this source repository.
+
 ## Launch standalone
 
 Run from the game directory:
@@ -66,11 +80,44 @@ arch -arm64 ./csgo_osx64 -insecure -novid -windowed +map de_dust2
 
 Standalone listen servers intentionally fall back to LAN mode when Steam services are unavailable. Console messages from failed Steam API initialization may still appear; they are non-fatal in this mode.
 
-Backtick opens the developer console. The Mac gameplay preset locks the normal world FOV to 80, the saved Desktop-preset weapon viewmodel FOV of 60, mouse sensitivity to 1.029863, and `m_pitch` to 0.018. The persistent in-game HUD is crosshair-only; the sniper scope overlay and deliberately opened buy/team menus remain available. On-screen gameplay hints, objective lessons, and local weapon-drop messages are disabled. Sniper rifles keep a static crosshair while unscoped; the scope uses its own reticle. Click right mouse once to use the AWP's first zoom and again to unscope, even during a shot cooldown. The AWP scope reticle stays sharp while walking (shot accuracy is unchanged), and zooming does not reduce its movement speed below its unzoomed speed. The scroll wheel cycles weapons without showing a selection HUD.
+Backtick opens the developer console. The Mac gameplay preset locks the normal world FOV to 80, the saved Desktop-preset weapon viewmodel FOV of 60, mouse sensitivity to 1.029863, and `m_pitch` to 0.018. The persistent in-game HUD is crosshair-only; the sniper scope overlay and deliberately opened buy/team menus remain available. On-screen gameplay hints, objective lessons, and local weapon-drop messages are disabled. Every unscoped weapon uses the same fixed white four-bar crosshair. The AWP uses Allied Assault's 20-degree sniper FOV, one-step right-click toggle, immediate FOV change, and original zoom overlay when installed with the script above. The scroll wheel cycles weapons without showing a selection HUD.
 
 Use `cg_drawviewmodel 0` to hide the first-person weapon and hands, `cg_drawviewmodel 1` to show only the weapon, or `cg_drawviewmodel 2` for the normal weapon-and-hands view. K cycles through all three values. The default is 2, and the setting is saved. K replaces the previous voice-record binding.
 
-For the local listen-server host, the preset keeps `sv_cheats` enabled, god mode active, hit-tagging slowdown disabled, the account at the server's maximum balance, and the active weapon's clip full. In classic matches, each CT spawn gives a USP-S, silenced M4A1-S and AWP; each T spawn gives a Glock, AK-47 and AWP. The AWP is an extra primary weapon and has a separate scroll-wheel position. While alive, the host can open the buy menu and buy anywhere throughout the round, regardless of buy zones, buy time, warmup or mode-specific buy locks. Ordinary inventory limits still apply to individual items. Bots on the local server retain vest armor but receive no helmet protection. These server-side benefits do not override a remote server's rules or apply to other human players. A remote server may also impose its own mouse-pitch limit. The preset is compiled into this Mac build rather than stored in `config.cfg`; editing that file will not change the local locked values.
+Left Shift leans left, Space leans right, and F jumps. Lean uses OpenMoHAA's
+Allied Assault multiplayer timing, 40-degree limit, camera pivot, and roll.
+Left or right Control toggles crouch; C toggles walk.
+W/S and A/D use nullbind-style SOCD: the most recently pressed direction wins
+while both are held, and releasing it resumes the other held direction.
+The Mac local preset uses Allied Assault deathmatch's 275 run speed, 0.6 walk
+and crouch modifiers (165 each), and a combined 99 crouch-walk speed. Backward
+input is 0.8 of forward and strafe input is 0.85, as in AA. The AWP uses AA's
+0.8 sniper movement multiplier, giving 220 while running and 132 while walking
+or crouching. Other local weapons use the full movement speed.
+
+All grenade types, including flashbangs, and all knives are unavailable in this
+build: they cannot be bought, granted, picked up, or spawned on maps. C4 cannot be granted or picked
+up, and bomb sites do not become objectives. Local matches start in free-for-all
+deathmatch, with respawns enabled and every player a valid target. Set
+`mp_teammates_are_enemies 0` in the console for team deathmatch. Weapon inaccuracy
+uses each weapon's first-shot standing or crouching baseline while running,
+jumping, climbing, or spraying. Shots retain their normal random first-shot
+spread. Recoil remains visible and affects aim, but each automatic shot samples
+a different recoil table entry instead of following a fixed spray sequence.
+The view tracks recoil so the crosshair remains centered on the recoil-adjusted
+shot direction.
+
+For the local listen-server host, the preset keeps `sv_cheats` enabled, god mode active, hit-tagging slowdown disabled, the account at the server's maximum balance, and the active weapon's clip full. In classic and deathmatch games, each CT spawn gives a USP-S, silenced M4A1-S and AWP; each T spawn gives a USP-S, AK-47 and AWP. Other players on either team also spawn with a USP-S by default. The AWP is an extra primary weapon and has a separate scroll-wheel position. While alive, the host can open the buy menu and buy anywhere throughout the round, regardless of buy zones, buy time or mode-specific buy locks. Ordinary inventory limits still apply to individual items. Bots on the local server retain vest armor but receive no helmet protection. These server-side benefits do not override a remote server's rules or apply to other human players. A remote server may also impose its own mouse-pitch limit. The preset is compiled into this Mac build rather than stored in `config.cfg`; editing that file will not change the local locked values.
+
+The AWP uses its native Asiimov paint kit, and the AK-47 uses its official
+model-specific Asiimov texture and paint kit when installed from the acquired
+content. The M4A1-S uses its default finish. Chickens are suppressed on local
+maps, and the warmup period is disabled by default. Once a map finishes loading,
+the team menu appears without a Continue button and stays open until a team is
+chosen; choosing CT or T switches teams immediately and spawns the player.
+
+Deathmatch's automatic random buy and automatic rebuy are disabled on Mac so
+they cannot replace the fixed spawn loadout after it is granted.
 
 ## Status
 

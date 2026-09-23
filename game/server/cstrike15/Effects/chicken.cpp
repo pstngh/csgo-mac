@@ -78,6 +78,11 @@ void CChicken::Precache( void )
 //-----------------------------------------------------------------------
 void CChicken::Spawn( void )
 {
+#if defined( OSX )
+	// Suppress both map-placed and script-created chickens in the Mac preset.
+	UTIL_Remove( this );
+	return;
+#endif
 
 	SetModel( "models/chicken/chicken.mdl" );
 
@@ -1280,4 +1285,3 @@ void CChicken::OnMoveToSuccess( const Vector &goal )
 void CChicken::OnMoveToFailure( const Vector &goal, MoveToFailureType reason )
 {
 }
-

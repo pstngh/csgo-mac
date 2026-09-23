@@ -69,7 +69,7 @@ ConVar cv_bot_allow_shotguns( "bot_allow_shotguns", "1", FCVAR_RELEASE|FCVAR_REP
 ConVar cv_bot_allow_sub_machine_guns( "bot_allow_sub_machine_guns", "1", FCVAR_RELEASE|FCVAR_REPLICATED, "If nonzero, bots may use sub-machine guns." );
 ConVar cv_bot_allow_rifles( "bot_allow_rifles", "1", FCVAR_RELEASE|FCVAR_REPLICATED, "If nonzero, bots may use rifles." );
 ConVar cv_bot_allow_machine_guns( "bot_allow_machine_guns", "1", FCVAR_RELEASE|FCVAR_REPLICATED, "If nonzero, bots may use the machine gun." );
-ConVar cv_bot_allow_grenades( "bot_allow_grenades", "1", FCVAR_RELEASE|FCVAR_REPLICATED, "If nonzero, bots may use grenades." );
+ConVar cv_bot_allow_grenades( "bot_allow_grenades", "0", FCVAR_RELEASE|FCVAR_REPLICATED, "Grenades are disabled in this build." );
 ConVar cv_bot_allow_snipers( "bot_allow_snipers", "1", FCVAR_RELEASE|FCVAR_REPLICATED, "If nonzero, bots may use sniper rifles." );
 #ifdef CS_SHIELD_ENABLED
 ConVar cv_bot_allow_shield( "bot_allow_shield", "1", FCVAR_REPLICATED );

@@ -29,6 +29,7 @@
 #include "shared_util.h"
 #include "util.h"
 #include "shareddefs.h"
+#include "gamevars_shared.h"
 
 #include "tier0/vprof.h"
 
@@ -1003,6 +1004,11 @@ inline bool CBot< PlayerType >::IsEnemy( CBaseEntity *ent ) const
 		return false;	
 
 	CBasePlayer *player = static_cast<CBasePlayer *>( ent );
+
+#if defined( CSTRIKE15 )
+	if ( mp_teammates_are_enemies.GetBool() )
+		return player != static_cast<const CBasePlayer *>( this );
+#endif
 
 	// if they are on our team, they are our friends
 	// dgoodenough - Fix GCC / MSVC difference

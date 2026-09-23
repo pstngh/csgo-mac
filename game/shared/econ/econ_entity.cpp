@@ -274,7 +274,7 @@ void CEconEntity::InitializeAttributes( void )
 		}
 	}
 
-	if ( !bFoundSOData && pEconItemView->GetItemID() > 0 )
+	if ( !bFoundSOData && ( pEconItemView->GetItemID() > 0 || m_nFallbackPaintKit > 0 ) )
 	{
 		// The SO Data for this item hasn't been retrieved yet!
 		// This is the old obsolete fallback for demos

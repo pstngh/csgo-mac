@@ -468,6 +468,7 @@ IMPLEMENT_SERVERCLASS_ST( CCSPlayer, DT_CSPlayer )
 
 	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 0 ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 	SendPropAngle( SENDINFO_VECTORELEM( m_angEyeAngles, 1 ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+	SendPropFloat( SENDINFO( m_flLeanAngle ), 0, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
 		
 	SendPropInt( SENDINFO( m_iAddonBits ), NUM_ADDON_BITS, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iPrimaryAddon ), 8, SPROP_UNSIGNED ),
@@ -632,6 +633,7 @@ ConCommand cc_CreatePredictionError( "CreatePredictionError", cc_CreatePredictio
 // -------------------------------------------------------------------------------- //
 CCSPlayer::CCSPlayer()
 {
+	m_flLeanAngle = 0.0f;
 	m_PlayerAnimState = CreatePlayerAnimState( this, this, LEGANIM_9WAY, true );
 	m_PlayerAnimStateCSGO = CreateCSGOPlayerAnimstate( this );
 
@@ -1330,6 +1332,7 @@ void CCSPlayer::SetCSSpawnLocation( Vector position, QAngle angle )
 
 void CCSPlayer::Spawn()
 {
+	m_flLeanAngle = 0.0f;
 	m_RateLimitLastCommandTimes.Purge();
 
 	// Get rid of the progress bar...
@@ -2003,7 +2006,7 @@ void CCSPlayer::GiveDefaultItems()
 
 #if defined( OSX )
 	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() &&
-		 CSGameRules()->IsPlayingClassic() &&
+		 ( CSGameRules()->IsPlayingClassic() || CSGameRules()->IsPlayingGunGameDeathmatch() ) &&
 		 ( GetTeamNumber() == TEAM_CT || GetTeamNumber() == TEAM_TERRORIST ) )
 	{
 		// Rebuild this player's guns on every spawn, including rounds in
@@ -2013,9 +2016,6 @@ void CCSPlayer::GiveDefaultItems()
 		while ( CBaseCombatWeapon *pOldPistol = Weapon_GetSlot( WEAPON_SLOT_PISTOL ) )
 			DestroyWeapon( pOldPistol );
 
-		if ( !Weapon_GetSlot( WEAPON_SLOT_KNIFE ) )
-			GiveNamedItem( pchTeamKnifeName );
-
 		if ( GetTeamNumber() == TEAM_CT )
 		{
 			GiveNamedItem( "weapon_usp_silencer" );
@@ -2023,7 +2023,7 @@ void CCSPlayer::GiveDefaultItems()
 		}
 		else
 		{
-			GiveNamedItem( "weapon_glock" );
+			GiveNamedItem( "weapon_usp_silencer" );
 			GiveNamedItem( "weapon_ak47" );
 		}
 		GiveNamedItem( "weapon_awp" );
@@ -2047,9 +2047,9 @@ void CCSPlayer::GiveDefaultItems()
 			{
 				const char *secondaryString = NULL;
 				if ( GetTeamNumber() == TEAM_CT )
-					secondaryString = mp_ct_default_secondary.GetString();
+					secondaryString = "weapon_usp_silencer";
 				else if ( GetTeamNumber() == TEAM_TERRORIST )
-					secondaryString = mp_t_default_secondary.GetString();
+					secondaryString = "weapon_usp_silencer";
 
 				CSWeaponID weaponId = WeaponIdFromString( secondaryString );
 				if ( weaponId )
@@ -2597,6 +2597,7 @@ public:
 
 void CCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
+	m_flLeanAngle = 0.0f;
 	SetKilledTime( gpGlobals->curtime );
 
 	// [pfreese] Process on-death achievements
@@ -9187,7 +9188,12 @@ bool CCSPlayer::ClientCommand( const CCommand &args )
 			if ( !CSGameRules() )
 				return false;
 
-			SetContextThink( &CBasePlayer::PlayerForceTeamThink, gpGlobals->curtime + 0.5f, CS_FORCE_TEAM_THINK_CONTEXT );
+#if defined( OSX )
+			if ( !engine->IsDedicatedServer() )
+				ResetForceTeamThink(); // leave local team choice open until the player selects one
+			else
+#endif
+				SetContextThink( &CBasePlayer::PlayerForceTeamThink, gpGlobals->curtime + 0.5f, CS_FORCE_TEAM_THINK_CONTEXT );
 			int nAutoJoinTeam = 0;
 			if ( CSGameRules() && CSGameRules()->IsPlayingTraining() )
 				nAutoJoinTeam = TEAM_CT;
@@ -11276,6 +11282,13 @@ void CCSPlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 	CWeaponCSBase *pCSWeapon = dynamic_cast< CWeaponCSBase* >( pWeapon );
 	if ( pCSWeapon )
 	{
+		if ( pCSWeapon->GetWeaponType() == WEAPONTYPE_GRENADE || pCSWeapon->GetCSWeaponID() == WEAPON_C4 ||
+			( pCSWeapon->GetWeaponType() == WEAPONTYPE_KNIFE && pCSWeapon->GetCSWeaponID() != WEAPON_TASER ) )
+		{
+			UTIL_Remove( pCSWeapon );
+			return;
+		}
+
 		// For rifles, pistols, or the knife, drop our old weapon in this slot.
 		if ( pCSWeapon->GetSlot() == WEAPON_SLOT_RIFLE || 
 			pCSWeapon->GetSlot() == WEAPON_SLOT_PISTOL )
@@ -12598,6 +12611,14 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 			}
 		}
 	}
+	const char *pchItemClass = ( pScriptItem && pScriptItem->IsValid() )
+		? pScriptItem->GetStaticData()->GetItemClass() : pchName;
+	const CCSWeaponInfo *pWeaponInfo = GetWeaponInfo( WeaponIdFromString( pchItemClass ) );
+	if ( pWeaponInfo && ( pWeaponInfo->GetWeaponType( pScriptItem ) == WEAPONTYPE_GRENADE ||
+		pWeaponInfo->m_weaponId == WEAPON_C4 ||
+		( pWeaponInfo->GetWeaponType( pScriptItem ) == WEAPONTYPE_KNIFE && pWeaponInfo->m_weaponId != WEAPON_TASER ) ) )
+		return NULL;
+
 //#if !defined( NO_STEAM_GAMECOORDINATOR )
 	if ( pScriptItem && pScriptItem->IsValid() )
 	{
@@ -12751,16 +12772,7 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 
 bool CCSPlayer::CanUseGrenade( CSWeaponID nID )
 {
-	if ( nID == WEAPON_MOLOTOV )
-	{
-		if ( gpGlobals->curtime < m_fMolotovUseTime )
-		{
-			// Can't use molotov until timer elapses
-			return false;
-		}
-	}
-
-	return true;
+	return false;
 }
 
 void CCSPlayer::DoAnimStateEvent( PlayerAnimEvent_t evt )

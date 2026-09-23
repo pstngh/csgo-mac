@@ -226,15 +226,21 @@ void CCSGameMovement::CheckParameters( void )
 	bool opposingForwardBack = ( moveForward && moveBackward );
 	bool opposingRightLeft = ( moveRight && moveLeft );
 
-	// NOTE[pmf] ignore the walk button when we're ducking; this test matches that in CCSGameMovement::HandleDuckingSpeedCrop()
+	// NOTE[pmf] original CS ignores walk while ducking. AA stacks both 0.6 modifiers.
 	// we can't simply test mv->m_iSpeedCropped == SPEED_CROPPED_DUCK, because that is set AFTER this code executes
+#if !defined( OSX )
 	if ( ( mv->m_nButtons & IN_DUCK ) || ( player->m_Local.m_bDucking ) || ( player->GetFlags() & FL_DUCKING ) )
 	{
 		walkButtonIsDown = false;
 	}
+#endif
 
 	if ( walkButtonIsDown )
 	{
+#if defined( OSX )
+		mv->m_flMaxSpeed *= CS_PLAYER_SPEED_WALK_MODIFIER;
+		m_pCSPlayer->m_bIsWalking = true;
+#else
 		// we don't cap walk immediately, let the player decelerate and only cap when the speed is really close
 		float currentspeed = m_pCSPlayer->GetLocalVelocity( ).Length( );
 		if ( currentspeed < ( ( mv->m_flMaxSpeed * CS_PLAYER_SPEED_WALK_MODIFIER ) + 25 ) )
@@ -242,11 +248,25 @@ void CCSGameMovement::CheckParameters( void )
 			mv->m_flMaxSpeed *= CS_PLAYER_SPEED_WALK_MODIFIER;
 			m_pCSPlayer->m_bIsWalking = true;
 		}
+#endif
 	}
 	else
 	{
 		m_pCSPlayer->m_bIsWalking = false;
 	}
+
+#if defined( OSX )
+	// The input ratios alone would be clipped back to the same max speed.
+	// AA's command scale caps axial/back+strafe movement at the largest
+	// active input fraction: forward 1.0, strafe 0.85, backward 0.8.
+	if ( !moveForward )
+	{
+		if ( moveRight || moveLeft )
+			mv->m_flMaxSpeed *= 0.85f;
+		else if ( moveBackward )
+			mv->m_flMaxSpeed *= 0.8f;
+	}
+#endif
 
 	float speed_squared = 0.0f;
 
@@ -450,6 +470,12 @@ bool CCSGameMovement::CanAccelerate()
 
 void CCSGameMovement::PlayerMove()
 {
+	if ( m_pCSPlayer->IsAlive() && m_pCSPlayer->GetMoveType() != MOVETYPE_LADDER )
+		m_pCSPlayer->m_flLeanAngle = CS_AdvanceAALean( m_pCSPlayer->m_flLeanAngle,
+			mv->m_nButtons, gpGlobals->frametime );
+	else
+		m_pCSPlayer->m_flLeanAngle = 0.0f;
+
 	if ( !m_pCSPlayer->CanMove() )
 	{
 		mv->m_flForwardMove = 0;
@@ -1270,8 +1296,15 @@ void CCSGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel 
 
 	bool bIsDucking = ( mv->m_nButtons & IN_DUCK ) || ( player->m_Local.m_bDucking ) || ( player->GetFlags() & FL_DUCKING );
 	bool bIsWalking = ( mv->m_nButtons & ( /*IN_WALK | */ IN_SPEED ) ) != 0 && !bIsDucking;
+#if defined( OSX )
+	// AA multiplies walking and crouching speeds when both are active.
+	bIsWalking = ( mv->m_nButtons & IN_SPEED ) != 0;
+#endif
 
 	float flMaxSpeed = 250.0f;
+#if defined( OSX )
+	flMaxSpeed = CS_PLAYER_SPEED_RUN;
+#endif
 	float fAccelerationScale = MAX(flMaxSpeed, wishspeed);
 	float flGoalSpeed = fAccelerationScale;
 
@@ -1287,19 +1320,20 @@ void CCSGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel 
 	if ( sv_accelerate_use_weapon_speed.GetBool( ) && csWeapon )
 	{
 		float flWeaponMaxSpeed = csWeapon->GetMaxSpeed();
-		bool bMacUnrestrictedScopedAwp = false;
+		bool bMacLocalPlayer = false;
 #if defined( OSX )
 #if defined( CLIENT_DLL )
-		bMacUnrestrictedScopedAwp = engine->IsClientLocalToActiveServer() &&
-			m_pCSPlayer == C_CSPlayer::GetLocalCSPlayer() && csWeapon->GetCSWeaponID() == WEAPON_AWP;
+		bMacLocalPlayer = engine->IsClientLocalToActiveServer() &&
+			m_pCSPlayer == C_CSPlayer::GetLocalCSPlayer();
 #else
-		bMacUnrestrictedScopedAwp = !engine->IsDedicatedServer() &&
-			m_pCSPlayer == UTIL_GetLocalPlayerOrListenServerHost() && csWeapon->GetCSWeaponID() == WEAPON_AWP;
+		bMacLocalPlayer = !engine->IsDedicatedServer() &&
+			m_pCSPlayer == UTIL_GetLocalPlayerOrListenServerHost();
 #endif
-		if ( bMacUnrestrictedScopedAwp )
-			flWeaponMaxSpeed = csWeapon->GetCSWpnData().GetMaxSpeed( csWeapon->GetEconItemView(), Primary_Mode );
+		if ( bMacLocalPlayer )
+			flWeaponMaxSpeed = csWeapon->GetCSWeaponID() == WEAPON_AWP ?
+				CS_PLAYER_SPEED_RUN * 0.8f : CS_PLAYER_SPEED_RUN;
 #endif
-		bIsSlowSniperScoped = !bMacUnrestrictedScopedAwp && csWeapon->GetCSZoomLevel() > 0 &&
+		bIsSlowSniperScoped = !bMacLocalPlayer && csWeapon->GetCSZoomLevel() > 0 &&
 			csWeapon->GetZoomLevels() > 1 && ( flWeaponMaxSpeed * CS_PLAYER_SPEED_WALK_MODIFIER ) < 110.0f;
 
 		flGoalSpeed *= MIN( 1.0f, ( flWeaponMaxSpeed / flMaxSpeed ) );

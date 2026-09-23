@@ -251,10 +251,14 @@ bool CSNavMesh::Save( void ) const
 
 NavErrorType CSNavMesh::PostLoad( unsigned int version )
 {
+#if defined( OSX )
+	m_desiredChickenCount = 0;
+#else
 	if ( CSGameRules()->IsPlayingGunGameDeathmatch() )
 		m_desiredChickenCount = 10;
 	else
 		m_desiredChickenCount = g_pMapInfo ? g_pMapInfo->m_iPetPopulation : 0;
+#endif
 	m_chickenVector.RemoveAll();
 
 	if ( CSGameRules() && CSGameRules()->IsPlayingCooperativeGametype() )

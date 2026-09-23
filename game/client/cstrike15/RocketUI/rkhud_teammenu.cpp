@@ -27,12 +27,12 @@ public:
         if( id == "team_ct" )
         {
             RocketTeamMenuDocument::ShowPanel( false );
-            engine->ClientCmd_Unrestricted("jointeam 3");
+            engine->ClientCmd_Unrestricted("jointeam 3 1");
         }
         else if( id == "team_t" )
         {
             RocketTeamMenuDocument::ShowPanel( false );
-            engine->ClientCmd_Unrestricted("jointeam 2");
+            engine->ClientCmd_Unrestricted("jointeam 2 1");
         }
         else if( id == "team_spec" )
         {

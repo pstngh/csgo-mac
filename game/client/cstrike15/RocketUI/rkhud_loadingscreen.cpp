@@ -39,7 +39,12 @@ void RocketLoadingScreenDocument::LoadDialog()
             Error( "Couldn't create rocketui loadingscreen!\n");
             /* Exit */
         }
+#if defined( OSX )
+        if( Rml::Element *continueButton = m_pInstance->GetElementById( "continue" ) )
+            continueButton->SetProperty( "display", "none" );
+#else
         m_pInstance->AddEventListener( Rml::EventId::Mousedown, &loadingScreenClickListener );
+#endif
     }
 }
 

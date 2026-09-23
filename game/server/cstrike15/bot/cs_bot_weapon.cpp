@@ -1014,7 +1014,7 @@ public:
 		if (player == m_me || !player->IsAlive())
 			return true;
 
-		if (m_me->InSameTeam( player ))
+		if (m_me->InSameTeam( player ) && !mp_teammates_are_enemies.GetBool())
 		{
 			Vector to = player->EyePosition() - m_me->EyePosition();
 			to.NormalizeInPlace();

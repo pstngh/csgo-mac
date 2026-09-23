@@ -60,6 +60,10 @@ private:
 	int m_iScopeArcTexture;
 	int m_iScopeLineBlurTexture;
 	int m_iScopeDustTexture;
+#if defined( OSX )
+	int m_iMohaaScopeTexture;
+	float m_flMohaaScopeAlpha;
+#endif
 
 	float m_fAnimInset;
 	float m_fLineSpreadDistance;
@@ -82,6 +86,10 @@ CHudScope::CHudScope( const char *pElementName ) : CHudElement(pElementName), Ba
 
 	m_fAnimInset = 1;
 	m_fLineSpreadDistance = 1;
+#if defined( OSX )
+	m_iMohaaScopeTexture = 0;
+	m_flMohaaScopeAlpha = 0.0f;
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -97,6 +105,10 @@ void CHudScope::Init( void )
 
 	m_iScopeDustTexture = vgui::surface()->CreateNewTextureID();
 	vgui::surface()->DrawSetTextureFile(m_iScopeDustTexture, "overlays/scope_lens", true, false);
+#if defined( OSX )
+	m_iMohaaScopeTexture = vgui::surface()->CreateNewTextureID();
+	vgui::surface()->DrawSetTextureFile( m_iMohaaScopeTexture, "vgui/hud/mohaa_scope", true, false );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -152,7 +164,46 @@ void CHudScope::Paint( void )
 	CWeaponCSBase *pWeapon = pPlayer->GetActiveCSWeapon();
 		
 	if( !pWeapon || pWeapon->GetWeaponType() != WEAPONTYPE_SNIPER_RIFLE )
+	{
+#if defined( OSX )
+		m_flMohaaScopeAlpha = 0.0f;
+#endif
 		return;
+	}
+
+#if defined( OSX )
+	if ( pWeapon->GetCSWeaponID() == WEAPON_AWP )
+	{
+		// Allied Assault tiles its original 256px zoom overlay into a centered
+		// screen-height square, then blacks out the remaining side strips.
+		const float targetAlpha = pPlayer->m_bIsScoped ? 1.0f : 0.0f;
+		m_flMohaaScopeAlpha = Approach( targetAlpha, m_flMohaaScopeAlpha,
+			gpGlobals->frametime * 15.0f );
+		if ( m_flMohaaScopeAlpha > 0.0f )
+		{
+			int screenWide, screenTall;
+			GetHudSize( screenWide, screenTall );
+			const int halfHeight = screenTall / 2;
+			const int sideWidth = ( screenWide - screenTall ) / 2;
+			const int alpha = (int)( m_flMohaaScopeAlpha * 255.0f );
+			vgui::surface()->DrawSetColor( 255, 255, 255, alpha );
+			vgui::surface()->DrawSetTexture( m_iMohaaScopeTexture );
+			vgui::surface()->DrawTexturedSubRect( sideWidth, 0, sideWidth + halfHeight, halfHeight,
+				0.0f, 0.0f, 1.0f, 1.0f );
+			vgui::surface()->DrawTexturedSubRect( sideWidth + halfHeight, 0, sideWidth + screenTall, halfHeight,
+				1.0f, 0.0f, 0.0f, 1.0f );
+			vgui::surface()->DrawTexturedSubRect( sideWidth, halfHeight, sideWidth + halfHeight, screenTall,
+				0.0f, 1.0f, 1.0f, 0.0f );
+			vgui::surface()->DrawTexturedSubRect( sideWidth + halfHeight, halfHeight, sideWidth + screenTall, screenTall,
+				1.0f, 1.0f, 0.0f, 0.0f );
+			vgui::surface()->DrawSetColor( 0, 0, 0, alpha );
+			vgui::surface()->DrawFilledRect( 0, 0, sideWidth, screenTall );
+			vgui::surface()->DrawFilledRect( screenWide - sideWidth, 0, screenWide, screenTall );
+		}
+		return;
+	}
+	m_flMohaaScopeAlpha = 0.0f;
+#endif
 
 	Assert( m_iScopeArcTexture );
 	Assert( m_iScopeLineBlurTexture );

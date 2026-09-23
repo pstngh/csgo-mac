@@ -1678,7 +1678,11 @@ ConVar mp_buy_allow_grenades(
 
 ConVar mp_do_warmup_period( 
     "mp_do_warmup_period", 
+#if defined( OSX )
+    "0",
+#else
     "1",
+#endif
     FCVAR_REPLICATED | FCVAR_RELEASE,
     "Whether or not to do a warmup period at the start of a match.",
     true, 0,
@@ -2201,7 +2205,11 @@ ConVar mp_defuser_allocation(
 
 ConVar mp_give_player_c4(
 	"mp_give_player_c4",
+#if defined( OSX )
+	"0",
+#else
 	"1",
+#endif
 	FCVAR_REPLICATED | FCVAR_RELEASE,
 	"Whether this map should spawn a c4 bomb for a player or not.",
 	true, 0,
@@ -8015,11 +8023,16 @@ static bool Helper_CheckFieldAppliesToTeam( char const *szField, int nTeam )
             m_bMapHasBombTarget		= true;
             m_bMapHasBombZone		= false;
         }
-        else
-        {
+		else
+		{
             m_bMapHasBombTarget		= false;
             m_bMapHasBombZone		= false;
         }
+
+#if defined( OSX )
+		m_bMapHasBombTarget = false;
+		m_bMapHasBombZone = false;
+#endif
 
         // Check to see if this map has hostage rescue zones
 
@@ -14257,6 +14270,12 @@ void ServerThinkReplayUploader()
             m_bMapHasBombZone		= false;
         }
 
+#if defined( OSX )
+		// Objective zones never turn a deathmatch map into a bomb round.
+		m_bMapHasBombTarget = false;
+		m_bMapHasBombZone = false;
+#endif
+
         // See if the map has func_buyzone entities
         // Used by CBasePlayer::HandleSignals() to support maps without these entities
         if ( gEntList.FindEntityByClassname( NULL, "func_buyzone" ) )
@@ -17637,6 +17656,17 @@ void CCSGameRules::InitializeGameTypeAndMode( void )
 
 	g_pGameTypes->CheckShouldSetDefaultGameModeAndType( szMapNameFull );
 
+#if defined( OSX )
+	if ( !engine->IsDedicatedServer() )
+	{
+		// Maps may request their classic default mode; local play starts in DM.
+		ConVarRef gameType( "game_type" );
+		ConVarRef gameMode( "game_mode" );
+		gameType.SetValue( 1 );
+		gameMode.SetValue( 2 );
+	}
+#endif
+
     // Set the mode convars
     if ( g_pGameTypes->ApplyConvarsForCurrentMode( isMultiplayer ) )
     {
@@ -17784,6 +17814,19 @@ void CCSGameRules::InitializeGameTypeAndMode( void )
     ConVarRef bot_difficulty( "bot_difficulty" );
     bot_difficulty.SetValue( 0 );
 
+#endif
+
+#if defined( OSX ) && !defined( CLIENT_DLL )
+	if ( !engine->IsDedicatedServer() )
+	{
+		// Apply these after the deathmatch and map cfgs have executed.
+		mp_teammates_are_enemies.SetValue( 1 );
+		mp_respawn_on_death_t.SetValue( 1 );
+		mp_respawn_on_death_ct.SetValue( 1 );
+		mp_ct_default_secondary.SetValue( "weapon_usp_silencer" );
+		mp_t_default_secondary.SetValue( "weapon_usp_silencer" );
+	}
+	mp_give_player_c4.SetValue( 0 );
 #endif
 
     // this allows the weapon recoil tables to incorporate changes made to convars before the game launches

@@ -2076,6 +2076,21 @@ void Host_ReadConfiguration( const int iController, const bool readDefault )
 #if defined( CSTRIKE15 )
 	// Cycle all three first-person viewmodel modes with K.
 	Key_SetBinding( KEY_K, "incrementvar cg_drawviewmodel 0 2 1" );
+	Key_SetBinding( KEY_LSHIFT, "+leanleft" );
+	Key_SetBinding( KEY_SPACE, "+leanright" );
+	Key_SetBinding( KEY_F, "+jump" );
+	Key_SetBinding( KEY_LCONTROL, "+duck" );
+	Key_SetBinding( KEY_RCONTROL, "+duck" );
+	Key_SetBinding( KEY_C, "+speed" );
+	ConVarRef duckMethod( "option_duck_method" );
+	if ( duckMethod.IsValid() )
+		duckMethod.SetValue( 1 );
+	ConVarRef speedMethod( "option_speed_method" );
+	if ( speedMethod.IsValid() )
+		speedMethod.SetValue( 1 );
+	ConVarRef dmBuyRandom( "cl_dm_buyrandomweapons" );
+	if ( dmBuyRandom.IsValid() )
+		dmBuyRandom.SetValue( 0 );
 	// An archived config may re-enable the tutorial and objective prompts.
 	// Apply the Mac preset after that config has been executed.
 	ConVarRef gameInstructorEnable( "gameinstructor_enable" );

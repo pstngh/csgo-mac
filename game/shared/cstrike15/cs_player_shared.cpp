@@ -204,15 +204,85 @@ Vector CCSPlayer::Weapon_ShootPosition()
 {
 	Vector vecPos = BaseClass::Weapon_ShootPosition();
 
-	// fail out to un-altered position
-	if ( !m_bUseNewAnimstate || !m_PlayerAnimStateCSGO )
-		return vecPos;
+	if ( m_bUseNewAnimstate && m_PlayerAnimStateCSGO )
+	{
+		// warning: the modify eye position call will query and set up bones
+		// on the game server it is called when giving weapon items or firing bullets
+		m_PlayerAnimStateCSGO->ModifyEyePosition( vecPos );
+	}
 
-	// warning: the modify eye position call will query and set up bones
-	// on the game server it is called when giving weapon items or firing bullets
-	m_PlayerAnimStateCSGO->ModifyEyePosition( vecPos );
+	if ( m_flLeanAngle != 0.0f )
+	{
+		const Vector desired = vecPos + CS_AALeanEyeOffset( EyeAngles(), m_flLeanAngle );
+		vecPos = CS_AALeanTraceEye( this, vecPos, desired );
+	}
 
 	return vecPos;
+}
+
+float CS_AdvanceAALean( float angle, int buttons, float frameTime )
+{
+	// OpenMoHAA Allied Assault multiplayer: 40-degree limit, leanAdd 10,
+	// leanRecoverSpeed 15, leanSpeed 4. AA permits leaning while moving.
+	const float dt = clamp( frameTime, 0.001f, 0.2f );
+	const bool left = ( buttons & IN_ALT1 ) != 0;
+	const bool right = ( buttons & IN_ALT2 ) != 0;
+
+	if ( left != right )
+	{
+		if ( left )
+		{
+			if ( angle <= -40.0f )
+				return -40.0f;
+			const float towardLimit = dt * ( -40.0f - angle ) * 10.0f;
+			return angle + Min( towardLimit, -dt * 4.0f );
+		}
+
+		if ( angle >= 40.0f )
+			return 40.0f;
+		return angle + dt * ( 40.0f - angle ) * 10.0f;
+	}
+
+	if ( angle < 0.0f )
+	{
+		const float towardZero = angle * dt * 15.0f;
+		return Min( 0.0f, angle - Min( -dt * 4.0f, towardZero ) );
+	}
+	if ( angle > 0.0f )
+	{
+		const float towardZero = angle * dt * 15.0f;
+		return Max( 0.0f, angle - Max( dt * 4.0f, towardZero ) );
+	}
+	return 0.0f;
+}
+
+Vector CS_AALeanEyeOffset( const QAngle &viewAngles, float leanAngle )
+{
+	// OpenMoHAA rotates the eye around a pivot 28.7 units below it.
+	Vector forward;
+	AngleVectors( QAngle( viewAngles[PITCH], viewAngles[YAW], 0.0f ), &forward );
+	const Vector pivotToEye( 0.0f, 0.0f, 28.7f );
+	Vector cross;
+	CrossProduct( forward, pivotToEye, cross );
+	float sine, cosine;
+	SinCos( DEG2RAD( leanAngle ), &sine, &cosine );
+	return pivotToEye * ( cosine - 1.0f ) + cross * sine +
+		forward * ( DotProduct( forward, pivotToEye ) * ( 1.0f - cosine ) );
+}
+
+Vector CS_AALeanTraceEye( CBaseEntity *player, const Vector &start, const Vector &desired )
+{
+	// OpenMoHAA checks vertical clearance before moving the camera sideways.
+	const Vector mins( -6.0f, -6.0f, -6.0f );
+	const Vector maxs( 6.0f, 6.0f, 6.0f );
+	trace_t heightTrace;
+	UTIL_TraceHull( start, Vector( start.x, start.y, desired.z ), mins, maxs,
+		MASK_PLAYERSOLID, player, COLLISION_GROUP_NONE, &heightTrace );
+	trace_t lateralTrace;
+	UTIL_TraceHull( heightTrace.endpos,
+		Vector( desired.x, desired.y, heightTrace.endpos.z ), mins, maxs,
+		MASK_PLAYERSOLID, player, COLLISION_GROUP_NONE, &lateralTrace );
+	return lateralTrace.endpos;
 }
 
 #if defined( OSX )
@@ -375,10 +445,11 @@ float CCSPlayer::GetPlayerMaxSpeed()
 			{
 				float weaponSpeed = pWeapon->GetMaxSpeed();
 #if defined( OSX )
-				// The local player's AWP keeps its unscoped movement speed
-				// while zoomed; walking still applies its usual input modifier.
-				if ( MacIsLocalListenServerPlayer( this ) && pWeapon->GetCSWeaponID() == WEAPON_AWP )
-					weaponSpeed = pWeapon->GetCSWpnData().GetMaxSpeed( pWeapon->GetEconItemView(), Primary_Mode );
+				// Allied Assault deathmatch uses 0.8 movement for its sniper rifles.
+				// Other weapons use the full AA run speed in this local preset.
+				if ( MacIsLocalListenServerPlayer( this ) )
+					weaponSpeed = pWeapon->GetCSWeaponID() == WEAPON_AWP ?
+						CS_PLAYER_SPEED_RUN * 0.8f : CS_PLAYER_SPEED_RUN;
 #endif
 				speed = MIN( weaponSpeed, speed );
 			}
@@ -2485,7 +2556,11 @@ void CCSPlayer::UpdateStepSound( surfacedata_t *psurface, const Vector &vecOrigi
 	BaseClass::UpdateStepSound( psurface, vecOrigin, vecVelocity  );
 }
 
+#if defined( OSX )
+ConVar weapon_recoil_view_punch_extra( "weapon_recoil_view_punch_extra", "0", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Additional (non-aim) punch added to view from recoil" );
+#else
 ConVar weapon_recoil_view_punch_extra( "weapon_recoil_view_punch_extra", "0.055", FCVAR_RELEASE | FCVAR_CHEAT | FCVAR_REPLICATED, "Additional (non-aim) punch added to view from recoil" );
+#endif
 
 void CCSPlayer::KickBack( float fAngle, float fMagnitude )
 {
@@ -2746,6 +2821,10 @@ AcquireResult::Type CCSPlayer::CanAcquire( CSWeaponID weaponId, AcquireMethod::T
 
 	if ( pWeaponInfo == NULL )
 		return AcquireResult::InvalidItem;
+	// Exclude grenades, C4, and knives from buys and pickups for everyone.
+	if ( pWeaponInfo->GetWeaponType( pItem ) == WEAPONTYPE_GRENADE || weaponId == WEAPON_C4 ||
+		( pWeaponInfo->GetWeaponType( pItem ) == WEAPONTYPE_KNIFE && weaponId != WEAPON_TASER ) )
+		return AcquireResult::NotAllowedByProhibition;
 
 	AcquireResult::Type nGamerulesResult = CSGameRules()->IsWeaponAllowed( pWeaponInfo, GetTeamNumber(), pItem );
 	if ( nGamerulesResult != AcquireResult::Allowed )
