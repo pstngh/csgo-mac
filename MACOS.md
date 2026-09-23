@@ -111,8 +111,9 @@ For the local listen-server host, the preset keeps `sv_cheats` enabled, god mode
 
 The AWP uses its native Asiimov paint kit, and the AK-47 uses its official
 model-specific Asiimov texture and paint kit when installed from the acquired
-content. The M4A1-S uses its default finish. Chickens are suppressed on local
-maps, and the warmup period is disabled by default. Once a map finishes loading,
+content. The M4A1-S uses its native Mecha Industries finish and the USP-S uses
+its native Cyrex finish. Chickens are suppressed on local maps, and the warmup
+period is disabled by default. Once a map finishes loading,
 the team menu appears without a Continue button and stays open until a team is
 chosen; choosing CT or T switches teams immediately and spawns the player.
 

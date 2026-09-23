@@ -3053,7 +3053,9 @@ void CWeaponCSBase::Spawn()
 #if defined( OSX )
 	// Use the correct model-specific paint atlas for each weapon.
 	const int paintKit = GetCSWeaponID() == WEAPON_AWP ? 279 :
-		GetCSWeaponID() == WEAPON_AK47 ? 801 : 0;
+		GetCSWeaponID() == WEAPON_AK47 ? 801 :
+		!V_strcmp( GetClassname(), "weapon_m4a1_silencer" ) ? 587 :
+		!V_strcmp( GetClassname(), "weapon_usp_silencer" ) ? 637 : 0;
 	if ( paintKit != 0 )
 	{
 		m_nFallbackPaintKit = paintKit;
