@@ -29,11 +29,7 @@ if( POSIX )
     #OpenGL rendering imp
     target_sources(${OUTBINNAME} PRIVATE rocketrenderGL.cpp)
     if( APPLE )
-        find_library(ROCKETUI_SDL2_LIBRARY SDL2
-            PATHS /opt/homebrew/opt/sdl2/lib
-            NO_DEFAULT_PATH
-            REQUIRED)
-        target_link_libraries(${OUTBINNAME} "${ROCKETUI_SDL2_LIBRARY}")
+        target_link_libraries(${OUTBINNAME} "${SDL2_LIBRARY}")
     else()
         target_link_libraries(${OUTBINNAME} SDL2)
     endif()

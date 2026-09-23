@@ -48,12 +48,7 @@ if( LINUXALL )
 elseif( APPLE )
     # Launcher owns the SDL window/event loop on macOS. Linking it explicitly
     # also makes SDL available to TOGL's runtime-resolved entry points.
-    find_library(LAUNCHER_SDL2_LIBRARY SDL2
-        PATHS /opt/homebrew/opt/sdl2/lib
-        NO_DEFAULT_PATH
-        REQUIRED
-    )
-    target_link_libraries(${OUTBINNAME} "${LAUNCHER_SDL2_LIBRARY}")
+    target_link_libraries(${OUTBINNAME} "${SDL2_LIBRARY}")
 endif()
 
 target_sources(${OUTBINNAME} PRIVATE "${SRCDIR}/public/filesystem_init.cpp")

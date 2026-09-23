@@ -49,18 +49,5 @@ target_link_libraries(${OUTBINNAME} tier2_client mathlib_client)
 target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY})
 
 if( APPLE )
-    find_library(INPUTSYSTEM_IOKIT_FRAMEWORK IOKit REQUIRED)
-    find_library(INPUTSYSTEM_FORCEFEEDBACK_FRAMEWORK ForceFeedback REQUIRED)
-    find_library(INPUTSYSTEM_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
-    find_library(INPUTSYSTEM_SDL2_LIBRARY SDL2
-        PATHS /opt/homebrew/opt/sdl2/lib
-        NO_DEFAULT_PATH
-        REQUIRED
-    )
-    target_link_libraries(${OUTBINNAME}
-        "${INPUTSYSTEM_IOKIT_FRAMEWORK}"
-        "${INPUTSYSTEM_FORCEFEEDBACK_FRAMEWORK}"
-        "${INPUTSYSTEM_COREFOUNDATION_FRAMEWORK}"
-        "${INPUTSYSTEM_SDL2_LIBRARY}"
-    )
+    target_link_libraries(${OUTBINNAME} "-framework IOKit" "-framework ForceFeedback" "-framework CoreFoundation" "${SDL2_LIBRARY}")
 endif()

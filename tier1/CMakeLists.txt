@@ -55,7 +55,7 @@ if( WINDOWS OR X360 )
     #					$EnableC++Exceptions	"Yes (/EHsc)" [!$X360]
 endif()
 
-if( APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$" )
+if( OSXALL )
     target_sources(${OUTLIBNAME} PRIVATE "processor_detect_arm64.cpp")
 elseif( POSIX )
     target_sources(${OUTLIBNAME} PRIVATE "processor_detect_linux.cpp")

@@ -490,33 +490,12 @@ target_link_libraries(${OUTBINNAME} quickhull_client)
 if( APPLE AND NOT DEDICATED )
     # Native macOS engine services formerly supplied by VPC's
     # SystemFrameworks/implicit-library settings.
-    find_library(ENGINE_AUDIOTOOLBOX_FRAMEWORK AudioToolbox REQUIRED)
-    find_library(ENGINE_COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
-    find_library(ENGINE_AUDIOUNIT_FRAMEWORK AudioUnit REQUIRED)
-    find_library(ENGINE_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
-    find_library(ENGINE_CFNETWORK_FRAMEWORK CFNetwork REQUIRED)
-    find_library(ENGINE_SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration REQUIRED)
-    find_library(ENGINE_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
-    find_library(ENGINE_CORESERVICES_FRAMEWORK CoreServices REQUIRED)
-    find_library(ENGINE_OPENAL_FRAMEWORK OpenAL REQUIRED)
-    find_library(ENGINE_SDL2_LIBRARY SDL2
-        PATHS /opt/homebrew/opt/sdl2/lib
-        NO_DEFAULT_PATH
-        REQUIRED
-    )
     find_library(ENGINE_CURL_LIBRARY curl REQUIRED)
     target_link_libraries(${OUTBINNAME}
-        "${ENGINE_AUDIOTOOLBOX_FRAMEWORK}"
-        "${ENGINE_COREAUDIO_FRAMEWORK}"
-        "${ENGINE_AUDIOUNIT_FRAMEWORK}"
-        "${ENGINE_COREFOUNDATION_FRAMEWORK}"
-        "${ENGINE_CFNETWORK_FRAMEWORK}"
-        "${ENGINE_SYSTEMCONFIGURATION_FRAMEWORK}"
-        "${ENGINE_COREGRAPHICS_FRAMEWORK}"
-        "${ENGINE_CORESERVICES_FRAMEWORK}"
-        "${ENGINE_OPENAL_FRAMEWORK}"
-        "${ENGINE_SDL2_LIBRARY}"
-        "${ENGINE_CURL_LIBRARY}"
+        "-framework AudioToolbox" "-framework CoreAudio" "-framework AudioUnit"
+        "-framework CoreFoundation" "-framework CFNetwork" "-framework SystemConfiguration"
+        "-framework CoreGraphics" "-framework CoreServices" "-framework OpenAL"
+        "${SDL2_LIBRARY}" "${ENGINE_CURL_LIBRARY}"
     )
 endif()
 if( SDL AND NOT LINUXALL )

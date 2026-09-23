@@ -39,7 +39,6 @@ S_API void S_CALLTYPE SteamAPI_SetBreakpadAppID( uint32 ) {}
 S_API HSteamPipe S_CALLTYPE SteamGameServer_GetHSteamPipe() { return 0; }
 S_API HSteamUser S_CALLTYPE SteamGameServer_GetHSteamUser() { return 0; }
 S_API bool S_CALLTYPE SteamInternal_GameServer_Init( uint32, uint16, uint16, uint16, EServerMode, const char * ) { return false; }
-S_API int S_CALLTYPE SteamInternal_GameServer_Init_V2( uint32, uint16, uint16, EServerMode, const char *, const char *, void * ) { return 1; }
 S_API void SteamGameServer_Shutdown() {}
 S_API void SteamGameServer_RunCallbacks() {}
 S_API bool SteamGameServer_BSecure() { return false; }

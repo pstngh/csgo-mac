@@ -43,22 +43,23 @@ if(APPLE)
     # pre-C++11 initializers as errors even though the resulting bits are exact.
     add_compile_options(-Wno-c++11-narrowing)
     add_compile_definitions(
-        PLATFORM_ARM64=1
-        ARM64=1
-        X64BITS=1
         SSE2NEON_PRECISE_MINMAX=1
         SSE2NEON_PRECISE_SQRT=1
         SSE2NEON_PRECISE_DIV=1
     )
 
+    # Homebrew's sdl2-compat package provides SDL2. Prefer its opt link, then
+    # fall back to the default search (the second call is skipped once found).
+    find_library(SDL2_LIBRARY SDL2 PATHS /opt/homebrew/opt/sdl2/lib NO_DEFAULT_PATH)
+    find_library(SDL2_LIBRARY SDL2 REQUIRED)
+
+    # Offline Steam API shim; game modules find it through their @rpath.
     add_library(steam_api_offline SHARED thirdparty/steam_api_offline/steam_api_offline.cpp)
     target_include_directories(steam_api_offline PRIVATE "${CMAKE_SOURCE_DIR}/public")
     target_compile_definitions(steam_api_offline PRIVATE STEAM_API_EXPORTS GNUC VERSION_SAFE_STEAM_API_INTERFACES)
     set_target_properties(steam_api_offline PROPERTIES
         OUTPUT_NAME steam_offline
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../game/bin/osx64"
-        INSTALL_NAME_DIR "@loader_path"
-        BUILD_WITH_INSTALL_NAME_DIR TRUE)
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../game/bin/osx64")
 endif()
 
 add_subdirectory(appframework)
@@ -132,17 +133,6 @@ add_subdirectory(matchmaking) #Does all 4 matchmaking projects
 
 add_subdirectory(launcher)
 add_subdirectory(launcher_main) #The actual executable that just dlopen's launcher
-
-if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
-    # Client and server modules load the offline shim beside themselves.
-    set(MACOS_CSGO_BIN "${CMAKE_SOURCE_DIR}/../game/csgo/bin/osx64")
-    add_custom_target(macos_steam_api_runtime ALL
-        DEPENDS steam_api_offline
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${MACOS_CSGO_BIN}"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:steam_api_offline>" "${MACOS_CSGO_BIN}/libsteam_offline.dylib"
-        COMMENT "Copying the offline Steam API shim for game modules"
-        VERBATIM)
-endif()
 
 if( USE_SCALEFORM )
     add_subdirectory(scaleformui) #DUMMY cmake project so CLion can do analysis

@@ -19,9 +19,6 @@
 
 #ifdef OSX
 #include <OpenGL/OpenGL.h>
-#if !defined( __aarch64__ )
-#include "intelglmallocworkaround.h"
-#endif
 #endif
 
 // memdbgon -must- be the last include file in a .cpp file.
@@ -3040,17 +3037,6 @@ GLMContext::GLMContext( IDirect3DDevice9 *pDevice, GLMDisplayParams *params )
 
 #ifdef OSX
 	UpdateSwapchainVariables( true );
-	#if !defined( __aarch64__ )
-	if ( m_caps.m_badDriver108Intel )
-	{
-		// this way we have something to look for in terminal spew if users report issues related to this in the future.
-		printf( "\nEnabling GLSL compiler `malloc' workaround.\n" );
-		if ( !IntelGLMallocWorkaround::Get()->Enable() )
-		{
-			Warning( "Unable to enable OSX 10.8 / Intel HD4000 workaround, there might be crashes.\n" );
-		}
-	}
-	#endif
 
 #endif
 	// also, set the remote convar "gl_can_query_fast" to 1 if perf package present, else 0.

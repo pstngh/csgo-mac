@@ -63,16 +63,5 @@ target_sources(${OUTBINNAME} PRIVATE "keyrepeat.cpp")
 target_link_libraries(${OUTBINNAME} vgui_surfacelib_client tier2_client tier3_client libvstdlib_client)
 
 if( APPLE )
-    find_library(VGUI2_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
-    find_library(VGUI2_CARBON_FRAMEWORK Carbon REQUIRED)
-    find_library(VGUI2_SDL2_LIBRARY SDL2
-        PATHS /opt/homebrew/opt/sdl2/lib
-        NO_DEFAULT_PATH
-        REQUIRED
-    )
-    target_link_libraries(${OUTBINNAME}
-        "${VGUI2_COREFOUNDATION_FRAMEWORK}"
-        "${VGUI2_CARBON_FRAMEWORK}"
-        "${VGUI2_SDL2_LIBRARY}"
-    )
+    target_link_libraries(${OUTBINNAME} "-framework CoreFoundation" "-framework Carbon" "${SDL2_LIBRARY}")
 endif()

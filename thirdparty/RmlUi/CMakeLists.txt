@@ -330,7 +330,7 @@ foreach(library ${LIBRARIES})
 	   VERSION ${PROJECT_VERSION}
 	   SOVERSION ${PROJECT_VERSION_MAJOR}
 	)
-	if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+	if(APPLE)
 		set_target_properties(${NAME} PROPERTIES
 			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../game/bin/osx64")
 	endif()
