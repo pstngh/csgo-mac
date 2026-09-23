@@ -10984,8 +10984,10 @@ void CCSPlayer::State_PreThink_DEATH_WAIT_FOR_KEY()
 	if ( mp_forcecamera.GetInt() == OBS_ALLOW_NONE )
 		fAnyButtonDown = false;
 
-	// after a certain amount of time switch to observer mode even if they don't press a key.
-	else if (gpGlobals->curtime >= (m_flDeathTime + DEATH_ANIMATION_TIME + 3.0 ) )
+	// Fade-to-black must not prevent an enabled automatic respawn forever.
+	// After the normal death delay, advance even when spectator input is blocked.
+	if ( gpGlobals->curtime >= ( m_flDeathTime + DEATH_ANIMATION_TIME + 3.0 ) &&
+		( mp_forcecamera.GetInt() != OBS_ALLOW_NONE || IsAbleToInstantRespawn() ) )
 	{
 		fAnyButtonDown = true;
 	}
@@ -11105,6 +11107,13 @@ void CCSPlayer::TryGungameRespawn()
 		{
 			// Perform the respawn of the player in gun game progressive
 			m_bRespawning = true;
+			// A direct death-to-respawn transition skips OBSERVER_MODE's fade purge.
+			// Clear the persistent black death fade before returning to play.
+			if ( mp_forcecamera.GetInt() == OBS_ALLOW_NONE )
+			{
+				color32_s clr = { 0, 0, 0, 255 };
+				UTIL_ScreenFade( this, clr, 0, 0, FFADE_IN | FFADE_PURGE );
+			}
 			State_Transition( STATE_ACTIVE );
 			respawn( this, false );
 			m_nButtons = 0;

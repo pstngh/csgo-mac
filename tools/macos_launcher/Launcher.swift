@@ -431,6 +431,10 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         bot_quota \(botCountPopup.indexOfSelectedItem)
         bot_difficulty \(difficultyPopup.indexOfSelectedItem)
         sv_auto_adjust_bot_difficulty 0
+        mp_forcecamera 0
+        mp_use_respawn_waves 0
+        mp_respawn_on_death_t 1
+        mp_respawn_on_death_ct 1
         cl_crosshairsize \(sizeSlider.integerValue)
         cl_crosshairgap \(gapSlider.integerValue)
         cl_crosshairthickness \(thicknessSlider.integerValue)
