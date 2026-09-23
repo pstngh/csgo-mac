@@ -1867,7 +1867,7 @@ void GLMContext::PreloadTex( CGLMTex *tex, bool force )
 		}
 	}
 
-	gGL->glUseProgram( static_cast<GLuint>( reinterpret_cast<uintptr_t>( preloadPair->m_program ) ) );
+	gGL->glUseProgram( (GLuint)(uintptr_t)preloadPair->m_program );
 					
 	m_pBoundPair = preloadPair;
 	m_bDirtyPrograms = true;

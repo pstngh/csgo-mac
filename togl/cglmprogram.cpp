@@ -135,7 +135,7 @@ CGLMProgram::~CGLMProgram( )
 	GLMShaderDesc *glslDesc = &m_descs[kGLMGLSL];
 	if (glslDesc->m_object.glsl)
 	{
-		gGL->glDeleteShader( static_cast<GLuint>( reinterpret_cast<uintptr_t>( glslDesc->m_object.glsl ) ) );
+		gGL->glDeleteShader( (GLuint)(uintptr_t)glslDesc->m_object.glsl );	// GLhandleARB is a pointer on macOS, an integer elsewhere
 		glslDesc->m_object.glsl = 0;
 	}
 
@@ -787,7 +787,7 @@ void	CGLMProgram::LogSlow( EGLMProgramLang lang )
 	// find the desc, see if it's marked
 	GLMShaderDesc *desc = &m_descs[ lang ];
 	const unsigned long long objectName = ( lang == kGLMGLSL )
-		? static_cast<unsigned long long>( reinterpret_cast<uintptr_t>( desc->m_object.glsl ) )
+		? (unsigned long long)(uintptr_t)desc->m_object.glsl
 		: static_cast<unsigned long long>( desc->m_object.arb );
 
 	if (!desc->m_slowMark)
@@ -968,7 +968,7 @@ bool CGLMShaderPair::ValidateProgramPair()
 
 		if (m_valid)
 		{
-			gGL->glUseProgram( static_cast<GLuint>( reinterpret_cast<uintptr_t>( m_program ) ) );
+			gGL->glUseProgram( (GLuint)(uintptr_t)m_program );
 
 			m_ctx->NewLinkedProgram();
 
