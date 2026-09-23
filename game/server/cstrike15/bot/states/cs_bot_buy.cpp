@@ -385,7 +385,11 @@ void BuyState::OnUpdate( CCSBot *me )
 			}
 			else if ( FStrEq( item, "vesthelm" ) )
 			{
+#if defined( OSX )
+				me->GiveNamedItem( "item_kevlar" );
+#else
 				me->GiveNamedItem( "item_assaultsuit" );
+#endif
 			}
 			else if ( FStrEq( item, "defuser" ) )
 			{
@@ -616,8 +620,10 @@ void BuyState::OnUpdate( CCSBot *me )
 			}
 
 			// buy armor last, to make sure we bought a weapon first
+#if !defined( OSX )
 			args.Tokenize( "buy vesthelm" );
 			me->ClientCommand( args );
+#endif
 			args.Tokenize( "buy vest" );
 			me->ClientCommand( args );
 
@@ -700,4 +706,3 @@ void BuyState::OnExit( CCSBot *me )
 	me->ResetStuckMonitor();
 	me->EquipBestWeapon();
 }
-

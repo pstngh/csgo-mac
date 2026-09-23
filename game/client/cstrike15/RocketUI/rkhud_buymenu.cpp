@@ -329,6 +329,10 @@ bool RkHudBuyMenu::ShouldDraw()
     // This element is opened/closed by clientside events
     // that we listen for and set m_bVisible manually via showpanel(true)
 
+#if defined( OSX )
+    if( engine->IsClientLocalToActiveServer() )
+        return m_bVisible;
+#endif
     return cl_drawhud.GetBool() && CSGameRules() && !CSGameRules()->IsBuyTimeElapsed() && m_bVisible && CHudElement::ShouldDraw();
 }
 

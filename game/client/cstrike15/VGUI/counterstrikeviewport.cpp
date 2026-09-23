@@ -121,6 +121,16 @@ CON_COMMAND_F( buymenu, "Show or hide main buy menu", FCVAR_SERVER_CAN_EXECUTE )
 		if ( pPlayer->m_lifeState != LIFE_ALIVE && pPlayer->State_Get() != STATE_ACTIVE )
 			return;
 
+#if defined( OSX )
+		// Match the local listen-server buy override: never reject the menu
+		// because the round timer, buy zone, or game mode says no.
+		if ( engine->IsClientLocalToActiveServer() && pPlayer->IsAlive() )
+		{
+			CSGameRules()->OpenBuyMenu( pPlayer->GetUserID() );
+			return;
+		}
+#endif
+
 		extern ConVar mp_buy_anywhere;
 		extern ConVar mp_buy_during_immunity;
 		static ConVarRef sv_buy_status_override_ref( "sv_buy_status_override" );

@@ -2076,6 +2076,14 @@ void Host_ReadConfiguration( const int iController, const bool readDefault )
 #if defined( CSTRIKE15 )
 	// Cycle all three first-person viewmodel modes with K.
 	Key_SetBinding( KEY_K, "incrementvar cg_drawviewmodel 0 2 1" );
+	// An archived config may re-enable the tutorial and objective prompts.
+	// Apply the Mac preset after that config has been executed.
+	ConVarRef gameInstructorEnable( "gameinstructor_enable" );
+	if ( gameInstructorEnable.IsValid() )
+		gameInstructorEnable.SetValue( 0 );
+	ConVarRef autoHelp( "cl_autohelp" );
+	if ( autoHelp.IsValid() )
+		autoHelp.SetValue( 0 );
 #endif
 #else
 	if (NULL == Key_NameForBinding("toggleconsole"))

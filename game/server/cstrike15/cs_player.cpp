@@ -4039,6 +4039,11 @@ void CCSPlayer::PostThink()
 	BaseClass::PostThink();
 
 #if defined( OSX )
+	// Bots may receive helmets from free armor, map loadouts or purchases.
+	// Remove only helmet protection, leaving their vest armor untouched.
+	if ( !engine->IsDedicatedServer() && IsBot() )
+		m_bHasHelmet = false;
+
 	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
 	{
 		// Keep the local player's protections and funds across rounds and
@@ -5796,6 +5801,12 @@ void CCSPlayer::Reset( bool resetScore )
 //-----------------------------------------------------------------------------
 void CCSPlayer::HintMessage( const char *pMessage, bool bDisplayIfDead, bool bOverrideClientSettings )
 {
+#if defined( OSX )
+	// Keep the local Mac HUD free of server-sent objective and control hints,
+	// including messages marked to override cl_autohelp.
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+		return;
+#endif
 	if ( !bDisplayIfDead && !IsAlive() || !IsNetClient() || !m_pHintMessageQueue )
 		return;
 

@@ -215,6 +215,17 @@ Vector CCSPlayer::Weapon_ShootPosition()
 	return vecPos;
 }
 
+#if defined( OSX )
+static bool MacCanBuyAnywhere( const CCSPlayer *pPlayer )
+{
+#if defined( CLIENT_DLL )
+	return engine->IsClientLocalToActiveServer() && pPlayer == C_CSPlayer::GetLocalCSPlayer();
+#else
+	return !engine->IsDedicatedServer() && pPlayer == UTIL_GetLocalPlayerOrListenServerHost();
+#endif
+}
+#endif
+
 bool CCSPlayer::IsInBuyZone()
 {
 	if ( mp_buy_anywhere.GetInt() == 1 ||
@@ -896,6 +907,13 @@ bool CCSPlayer::CanPlayerBuy( bool display )
 	{
 		return false;
 	}
+
+#if defined( OSX )
+	// The local Mac host can buy throughout a live round, regardless of
+	// buy zone, timer, warmup, team lock or game-mode buy restrictions.
+	if ( MacCanBuyAnywhere( this ) )
+		return true;
+#endif
 
 	// is the player in a buy zone?
 	if ( !IsInBuyZone() )
@@ -3220,5 +3238,3 @@ surfacedata_t * CCSPlayer::GetFootstepSurface( const Vector &origin, const char 
 }
 
 #endif
-
-
