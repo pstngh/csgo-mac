@@ -61,7 +61,6 @@ private:
 	int m_iScopeLineBlurTexture;
 	int m_iScopeDustTexture;
 #if defined( OSX )
-	int m_iMohaaScopeTexture;
 	float m_flMohaaScopeAlpha;
 #endif
 
@@ -87,7 +86,6 @@ CHudScope::CHudScope( const char *pElementName ) : CHudElement(pElementName), Ba
 	m_fAnimInset = 1;
 	m_fLineSpreadDistance = 1;
 #if defined( OSX )
-	m_iMohaaScopeTexture = 0;
 	m_flMohaaScopeAlpha = 0.0f;
 #endif
 }
@@ -105,10 +103,6 @@ void CHudScope::Init( void )
 
 	m_iScopeDustTexture = vgui::surface()->CreateNewTextureID();
 	vgui::surface()->DrawSetTextureFile(m_iScopeDustTexture, "overlays/scope_lens", true, false);
-#if defined( OSX )
-	m_iMohaaScopeTexture = vgui::surface()->CreateNewTextureID();
-	vgui::surface()->DrawSetTextureFile( m_iMohaaScopeTexture, "vgui/hud/mohaa_scope", true, false );
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -174,8 +168,8 @@ void CHudScope::Paint( void )
 #if defined( OSX )
 	if ( pWeapon->GetCSWeaponID() == WEAPON_AWP )
 	{
-		// Allied Assault tiles its original 256px zoom overlay into a centered
-		// screen-height square, then blacks out the remaining side strips.
+		// Draw the Allied Assault-style circular mask directly. The Mac VGUI
+		// texture path can render the transparent center as opaque black.
 		const float targetAlpha = pPlayer->m_bIsScoped ? 1.0f : 0.0f;
 		m_flMohaaScopeAlpha = Approach( targetAlpha, m_flMohaaScopeAlpha,
 			gpGlobals->frametime * 15.0f );
@@ -183,22 +177,24 @@ void CHudScope::Paint( void )
 		{
 			int screenWide, screenTall;
 			GetHudSize( screenWide, screenTall );
-			const int halfHeight = screenTall / 2;
-			const int sideWidth = ( screenWide - screenTall ) / 2;
+			const int centerX = screenWide / 2;
+			const int centerY = screenTall / 2;
+			const float radius = MIN( screenWide, screenTall ) * 0.5f;
+			const float radiusSquared = radius * radius;
 			const int alpha = (int)( m_flMohaaScopeAlpha * 255.0f );
-			vgui::surface()->DrawSetColor( 255, 255, 255, alpha );
-			vgui::surface()->DrawSetTexture( m_iMohaaScopeTexture );
-			vgui::surface()->DrawTexturedSubRect( sideWidth, 0, sideWidth + halfHeight, halfHeight,
-				0.0f, 0.0f, 1.0f, 1.0f );
-			vgui::surface()->DrawTexturedSubRect( sideWidth + halfHeight, 0, sideWidth + screenTall, halfHeight,
-				1.0f, 0.0f, 0.0f, 1.0f );
-			vgui::surface()->DrawTexturedSubRect( sideWidth, halfHeight, sideWidth + halfHeight, screenTall,
-				0.0f, 1.0f, 1.0f, 0.0f );
-			vgui::surface()->DrawTexturedSubRect( sideWidth + halfHeight, halfHeight, sideWidth + screenTall, screenTall,
-				1.0f, 1.0f, 0.0f, 0.0f );
 			vgui::surface()->DrawSetColor( 0, 0, 0, alpha );
-			vgui::surface()->DrawFilledRect( 0, 0, sideWidth, screenTall );
-			vgui::surface()->DrawFilledRect( screenWide - sideWidth, 0, screenWide, screenTall );
+			for ( int y = 0; y < screenTall; y += 2 )
+			{
+				const int bottom = MIN( y + 2, screenTall );
+				const float dy = ( y + bottom ) * 0.5f - centerY;
+				const float halfChord = sqrtf( MAX( 0.0f, radiusSquared - dy * dy ) );
+				const int left = (int)( centerX - halfChord );
+				const int right = (int)( centerX + halfChord );
+				vgui::surface()->DrawFilledRect( 0, y, left, bottom );
+				vgui::surface()->DrawFilledRect( right, y, screenWide, bottom );
+			}
+			vgui::surface()->DrawFilledRect( centerX, 0, centerX + 1, screenTall );
+			vgui::surface()->DrawFilledRect( 0, centerY, screenWide, centerY + 1 );
 		}
 		return;
 	}
