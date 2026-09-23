@@ -93,6 +93,7 @@ WeaponNameInfo s_weaponNameInfo[] =
 	{ WEAPON_TASER,				"weapon_taser" },
 
 	{ WEAPON_HKP2000,			"weapon_hkp2000" },
+	{ WEAPON_HKP2000,			"weapon_usp_silencer" },
 	{ WEAPON_MP7,				"weapon_mp7" },
 	{ WEAPON_MP9,				"weapon_mp9" },
 	{ WEAPON_NOVA,				"weapon_nova" },
@@ -733,6 +734,13 @@ void CCSWeaponInfo::Parse( KeyValues *pKeyValuesData, const char *szWeaponName )
 	BaseClass::Parse( pKeyValuesData, szWeaponName );
 
 	m_weaponId = WeaponIdFromString( szWeaponName );
+
+#if defined( OSX )
+	// The local Mac loadout can hold a rifle plus an AWP. Give the AWP
+	// its own selection position so the scroll wheel can reach both.
+	if ( m_weaponId == WEAPON_AWP )
+		iPosition = 1;
+#endif
 
 	m_flMaxSpeed[0] = ( float )pKeyValuesData->GetInt( "MaxPlayerSpeed", 1 );
 	m_flMaxSpeed[1] = ( float )pKeyValuesData->GetInt( "MaxPlayerSpeedAlt", m_flMaxSpeed[0] );
@@ -1441,6 +1449,5 @@ void GenerateWeaponRecoilPatternForItemDefinition( item_definition_index_t idx )
 {
 	g_WeaponRecoilData.GenerateRecoilPatternForItemDefinition( idx );
 }
-
 
 

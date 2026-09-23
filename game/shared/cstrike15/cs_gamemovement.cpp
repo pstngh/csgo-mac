@@ -1286,13 +1286,26 @@ void CCSGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel 
 	flGoalSpeed = fAccelerationScale;
 	if ( sv_accelerate_use_weapon_speed.GetBool( ) && csWeapon )
 	{
-		bIsSlowSniperScoped = (csWeapon->GetCSZoomLevel() > 0 && csWeapon->GetZoomLevels() > 1 
-								&& (csWeapon->GetMaxSpeed( ) * CS_PLAYER_SPEED_WALK_MODIFIER) < 110.0);
+		float flWeaponMaxSpeed = csWeapon->GetMaxSpeed();
+		bool bMacUnrestrictedScopedAwp = false;
+#if defined( OSX )
+#if defined( CLIENT_DLL )
+		bMacUnrestrictedScopedAwp = engine->IsClientLocalToActiveServer() &&
+			m_pCSPlayer == C_CSPlayer::GetLocalCSPlayer() && csWeapon->GetCSWeaponID() == WEAPON_AWP;
+#else
+		bMacUnrestrictedScopedAwp = !engine->IsDedicatedServer() &&
+			m_pCSPlayer == UTIL_GetLocalPlayerOrListenServerHost() && csWeapon->GetCSWeaponID() == WEAPON_AWP;
+#endif
+		if ( bMacUnrestrictedScopedAwp )
+			flWeaponMaxSpeed = csWeapon->GetCSWpnData().GetMaxSpeed( csWeapon->GetEconItemView(), Primary_Mode );
+#endif
+		bIsSlowSniperScoped = !bMacUnrestrictedScopedAwp && csWeapon->GetCSZoomLevel() > 0 &&
+			csWeapon->GetZoomLevels() > 1 && ( flWeaponMaxSpeed * CS_PLAYER_SPEED_WALK_MODIFIER ) < 110.0f;
 
-		flGoalSpeed *= MIN( 1.0f, ( csWeapon->GetMaxSpeed( ) / flMaxSpeed ) );
+		flGoalSpeed *= MIN( 1.0f, ( flWeaponMaxSpeed / flMaxSpeed ) );
 		
 		if ( (!bIsDucking && !bIsWalking) || (( bIsWalking || bIsDucking) && bIsSlowSniperScoped) )
-			fAccelerationScale *= MIN( 1.0f, (csWeapon->GetMaxSpeed() / flMaxSpeed));
+			fAccelerationScale *= MIN( 1.0f, ( flWeaponMaxSpeed / flMaxSpeed ) );
 	}
 
 	// TODO: make this number not a magic number
@@ -1464,4 +1477,3 @@ void CCSGameMovement::Accelerate( Vector& wishdir, float wishspeed, float accel 
 		}
 	}
 }
-

@@ -2001,6 +2001,37 @@ void CCSPlayer::GiveDefaultItems()
 
 	const char *pchTeamKnifeName = GetTeamNumber() == TEAM_TERRORIST ? "weapon_knife_t" : "weapon_knife";
 
+#if defined( OSX )
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() &&
+		 CSGameRules()->IsPlayingClassic() &&
+		 ( GetTeamNumber() == TEAM_CT || GetTeamNumber() == TEAM_TERRORIST ) )
+	{
+		// Rebuild this player's guns on every spawn, including rounds in
+		// which the previous pistol and rifle would normally be retained.
+		while ( CBaseCombatWeapon *pOldPrimary = Weapon_GetSlot( WEAPON_SLOT_RIFLE ) )
+			DestroyWeapon( pOldPrimary );
+		while ( CBaseCombatWeapon *pOldPistol = Weapon_GetSlot( WEAPON_SLOT_PISTOL ) )
+			DestroyWeapon( pOldPistol );
+
+		if ( !Weapon_GetSlot( WEAPON_SLOT_KNIFE ) )
+			GiveNamedItem( pchTeamKnifeName );
+
+		if ( GetTeamNumber() == TEAM_CT )
+		{
+			GiveNamedItem( "weapon_usp_silencer" );
+			GiveNamedItem( "weapon_m4a1_silencer" );
+		}
+		else
+		{
+			GiveNamedItem( "weapon_glock" );
+			GiveNamedItem( "weapon_ak47" );
+		}
+		GiveNamedItem( "weapon_awp" );
+		m_bPickedUpWeapon = false;
+		return;
+	}
+#endif
+
 	// don't give default items if the player is in a training map or deathmatch- we control weapon giving in the map for training and in DM, the player could get a random weapon
 	if ( CSGameRules()->IsPlayingTraining() || CSGameRules()->IsPlayingGunGameDeathmatch() )
 	{
@@ -11250,6 +11281,26 @@ void CCSPlayer::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 			pCSWeapon->GetSlot() == WEAPON_SLOT_PISTOL )
 		{
 			CBaseCombatWeapon *pDropWeapon = Weapon_GetSlot( pCSWeapon->GetSlot() );
+#if defined( OSX )
+			if ( pCSWeapon->GetSlot() == WEAPON_SLOT_RIFLE &&
+				 !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+			{
+				// Keep one AWP plus one other primary weapon in the local
+				// Mac loadout. Replacing either category drops only that one.
+				const bool bIncomingAwp = pCSWeapon->GetCSWeaponID() == WEAPON_AWP;
+				pDropWeapon = NULL;
+				for ( int i = 0; i < MAX_WEAPONS; ++i )
+				{
+					CWeaponCSBase *pOwnedWeapon = dynamic_cast<CWeaponCSBase*>( GetWeapon( i ) );
+					if ( pOwnedWeapon && pOwnedWeapon->GetSlot() == WEAPON_SLOT_RIFLE &&
+						 ( pOwnedWeapon->GetCSWeaponID() == WEAPON_AWP ) == bIncomingAwp )
+					{
+						pDropWeapon = pOwnedWeapon;
+						break;
+					}
+				}
+			}
+#endif
 			if ( pDropWeapon )
 			{
 				CSWeaponDrop( pDropWeapon, false, true );
@@ -11417,7 +11468,15 @@ bool CCSPlayer::BumpWeapon( CBaseCombatWeapon *pBaseWeapon )
 //		}
 //	}
 
-	if( bPickupC4 || bStackableItem || bPickupGrenade || bPickupTaser || /*bPickupCarriableItem || */ !Weapon_SlotOccupied( pWeapon ) )
+	bool bMacExtraPrimary = false;
+#if defined( OSX )
+	// Only explicitly granted/bought weapons may fill the extra primary slot.
+	// Allowing every touch here makes nearby dropped guns replace the loadout.
+	bMacExtraPrimary = m_bIsBeingGivenItem && !engine->IsDedicatedServer() &&
+		this == UTIL_GetLocalPlayerOrListenServerHost() &&
+		pWeapon->GetSlot() == WEAPON_SLOT_RIFLE;
+#endif
+	if( bPickupC4 || bStackableItem || bPickupGrenade || bPickupTaser || bMacExtraPrimary || /*bPickupCarriableItem || */ !Weapon_SlotOccupied( pWeapon ) )
 	{
 		// we have to do this here because picking up weapons placed in the world don't have their clips set
 		// TODO: give the weapon a clip on spawn and not when picked up!
@@ -12806,6 +12865,11 @@ void CCSPlayer::ReportCustomClothingModels( void )
 
 bool CCSPlayer::HandleDropWeapon( CBaseCombatWeapon *pWeapon, bool bSwapping )
 {
+#if defined( OSX )
+	const bool bSilentDropNotice = !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost();
+#else
+	const bool bSilentDropNotice = false;
+#endif
 
 	CWeaponCSBase *pCSWeapon = dynamic_cast< CWeaponCSBase* >( pWeapon ? pWeapon : GetActiveWeapon() );
 
@@ -12850,7 +12914,8 @@ bool CCSPlayer::HandleDropWeapon( CBaseCombatWeapon *pWeapon, bool bSwapping )
 			if ( pHealth )
 			{
 				pHealth->DropHealthshot();
-				ClientPrint( this, HUD_PRINTCENTER, "#SFUI_Notice_YouDroppedWeapon", pCSWeapon->GetPrintName() );
+				if ( !bSilentDropNotice )
+					ClientPrint( this, HUD_PRINTCENTER, "#SFUI_Notice_YouDroppedWeapon", pCSWeapon->GetPrintName() );
 				
 			}
 			return true;
@@ -12875,7 +12940,7 @@ bool CCSPlayer::HandleDropWeapon( CBaseCombatWeapon *pWeapon, bool bSwapping )
 			}
 			CSWeaponDrop( pCSWeapon, true, true );
 
-			if ( IsAlive() && !bSwapping )
+			if ( IsAlive() && !bSwapping && !bSilentDropNotice )
 				ClientPrint( this, HUD_PRINTCENTER, "#SFUI_Notice_YouDroppedWeapon", ( pItem ? pItem->GetItemDefinition()->GetItemBaseName() : pCSWeapon->GetPrintName() ) );
 		}
 		break;
@@ -12892,10 +12957,10 @@ bool CCSPlayer::HandleDropWeapon( CBaseCombatWeapon *pWeapon, bool bSwapping )
 				}
 				CSWeaponDrop( pCSWeapon, true, true );
 
-				if ( IsAlive( ) && !bSwapping )
+				if ( IsAlive( ) && !bSwapping && !bSilentDropNotice )
 					ClientPrint( this, HUD_PRINTCENTER, "#SFUI_Notice_YouDroppedWeapon", ( pItem ? pItem->GetItemDefinition( )->GetItemBaseName( ) : pCSWeapon->GetPrintName( ) ) );
 			}
-			else if ( IsAlive( ) && !bSwapping )
+			else if ( IsAlive( ) && !bSwapping && !bSilentDropNotice )
 			{
 				ClientPrint( this, HUD_PRINTCENTER, "#SFUI_Notice_CannotDropWeapon", ( pItem ? pItem->GetItemDefinition( )->GetItemBaseName( ) : pCSWeapon->GetPrintName( ) ) );
 			}

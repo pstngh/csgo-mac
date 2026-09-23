@@ -216,7 +216,7 @@ Vector CCSPlayer::Weapon_ShootPosition()
 }
 
 #if defined( OSX )
-static bool MacCanBuyAnywhere( const CCSPlayer *pPlayer )
+static bool MacIsLocalListenServerPlayer( const CCSPlayer *pPlayer )
 {
 #if defined( CLIENT_DLL )
 	return engine->IsClientLocalToActiveServer() && pPlayer == C_CSPlayer::GetLocalCSPlayer();
@@ -373,7 +373,14 @@ float CCSPlayer::GetPlayerMaxSpeed()
 			}
 			else
 			{
-				speed = MIN( pWeapon->GetMaxSpeed(), speed );
+				float weaponSpeed = pWeapon->GetMaxSpeed();
+#if defined( OSX )
+				// The local player's AWP keeps its unscoped movement speed
+				// while zoomed; walking still applies its usual input modifier.
+				if ( MacIsLocalListenServerPlayer( this ) && pWeapon->GetCSWeaponID() == WEAPON_AWP )
+					weaponSpeed = pWeapon->GetCSWpnData().GetMaxSpeed( pWeapon->GetEconItemView(), Primary_Mode );
+#endif
+				speed = MIN( weaponSpeed, speed );
 			}
 		}
 	}
@@ -911,7 +918,7 @@ bool CCSPlayer::CanPlayerBuy( bool display )
 #if defined( OSX )
 	// The local Mac host can buy throughout a live round, regardless of
 	// buy zone, timer, warmup, team lock or game-mode buy restrictions.
-	if ( MacCanBuyAnywhere( this ) )
+	if ( MacIsLocalListenServerPlayer( this ) )
 		return true;
 #endif
 
