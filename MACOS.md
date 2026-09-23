@@ -80,7 +80,25 @@ arch -arm64 ./csgo_osx64 -insecure -novid -windowed +map de_dust2
 
 Standalone listen servers intentionally fall back to LAN mode when Steam services are unavailable. Console messages from failed Steam API initialization may still appear; they are non-fatal in this mode.
 
-Backtick opens the developer console. The Mac gameplay preset locks the normal world FOV to 80, the saved Desktop-preset weapon viewmodel FOV of 60, mouse sensitivity to 1.029863, and `m_pitch` to 0.018. The persistent in-game HUD is crosshair-only; the sniper scope overlay and deliberately opened buy/team menus remain available. On-screen gameplay hints, objective lessons, and local weapon-drop messages are disabled. Every unscoped weapon uses the same fixed white four-bar crosshair. The AWP uses Allied Assault's 20-degree sniper FOV, one-step right-click toggle, immediate FOV change, and original zoom overlay when installed with the script above. The scroll wheel cycles weapons without showing a selection HUD.
+## Native Mac launcher
+
+Build the launcher app in a playable game directory:
+
+```sh
+./tools/install_macos_launcher.sh /Users/pstn/Documents/Games/csgo
+```
+
+Open `CSGO Launcher.app` in that directory to choose an installed map, bot count
+and difficulty, windowed or fullscreen resolution, and crosshair color, size,
+gap, thickness, opacity, dot, and outline. The launcher previews the crosshair,
+saves the choices, writes `csgo/cfg/mac_launcher.cfg`, and starts the game with
+that config after the map loads. Game output goes to `launcher-game.log` for
+troubleshooting. It keeps the original gameplay bindings and
+free-for-all defaults. The game directory in this checkout is at
+`/Users/pstn/Documents/Games/csgo`; its former sibling `../game` is a symlink
+so the existing CMake build still updates the installed game.
+
+Backtick opens the developer console. The Mac gameplay preset locks the normal world FOV to 80, the saved Desktop-preset weapon viewmodel FOV of 60, mouse sensitivity to 1.029863, and `m_pitch` to 0.018. The persistent in-game HUD is crosshair-only; the sniper scope overlay and deliberately opened buy/team menus remain available. On-screen gameplay hints, objective lessons, and local weapon-drop messages are disabled. Every unscoped weapon uses the same fixed four-bar crosshair, white by default and configurable through the launcher. The AWP uses Allied Assault's 20-degree sniper FOV, one-step right-click toggle, immediate FOV change, and original zoom overlay when installed with the script above. The scroll wheel cycles weapons without showing a selection HUD.
 
 Use `cg_drawviewmodel 0` to hide the first-person weapon and hands, `cg_drawviewmodel 1` to show only the weapon, or `cg_drawviewmodel 2` for the normal weapon-and-hands view. K cycles through all three values. The default is 2, and the setting is saved. K replaces the previous voice-record binding.
 

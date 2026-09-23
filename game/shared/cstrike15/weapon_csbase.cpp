@@ -406,6 +406,12 @@ LINK_ENTITY_TO_CLASS_ALIASED( weapon_cs_base, WeaponCSBase );
 	ConVar weapon_debug_spread_gap( "weapon_debug_spread_gap", "0.67", FCVAR_CLIENTDLL  | FCVAR_SS | FCVAR_CHEAT );
 	ConVar cl_crosshair_drawoutline( "cl_crosshair_drawoutline", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE  | FCVAR_SS, "Draws a black outline around the crosshair for better visibility" );
 	ConVar cl_crosshair_outlinethickness( "cl_crosshair_outlinethickness", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE  | FCVAR_SS, "Set how thick you want your crosshair outline to draw (0.1-3)", true, 0.1, true, 3 );
+#if defined( OSX )
+	ConVar cg_crosshair_r( "cg_crosshair_r", "255", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Mac crosshair red channel.", true, 0, true, 255 );
+	ConVar cg_crosshair_g( "cg_crosshair_g", "255", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Mac crosshair green channel.", true, 0, true, 255 );
+	ConVar cg_crosshair_b( "cg_crosshair_b", "255", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Mac crosshair blue channel.", true, 0, true, 255 );
+	ConVar cg_crosshair_alpha( "cg_crosshair_alpha", "255", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Mac crosshair opacity.", true, 0, true, 255 );
+#endif
 
 	ConVar cl_crosshair_dynamic_splitdist("cl_crosshair_dynamic_splitdist", "7", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_SS, "If using cl_crosshairstyle 2, this is the distance that the crosshair pips will split into 2. (default is 7)"/*, true, 10, true, 3*/);
 	ConVar cl_crosshair_dynamic_splitalpha_innermod("cl_crosshair_dynamic_splitalpha_innermod", "1", FCVAR_CLIENTDLL | FCVAR_ARCHIVE | FCVAR_SS, "If using cl_crosshairstyle 2, this is the alpha modification that will be used for the INNER crosshair pips once they've split. [0 - 1]", true, 0, true, 1);
@@ -1904,17 +1910,23 @@ void CWeaponCSBase::DrawCrosshair()
 		return;
 	{
 		// Use the former AWP four-bar reticle for every unscoped weapon.
-		// Keep it white and independent of movement and recoil.
+		// Its size and color are configurable, but it stays fixed during movement and recoil.
 		const int x = ScreenWidth() / 2;
 		const int y = ScreenHeight() / 2;
 		const int size = MAX( 1, RoundFloatToInt( YRES( cl_crosshairsize.GetFloat() ) ) );
 		const int thickness = MAX( 1, RoundFloatToInt( YRES( cl_crosshairthickness.GetFloat() ) ) );
 		const int gap = MAX( 1, RoundFloatToInt( cl_crosshairgap.GetFloat() + 4.0f ) );
 		const int halfThickness = thickness / 2;
-		DrawCrosshairRect( 255, 255, 255, 255, x - gap - size, y - halfThickness, x - gap, y - halfThickness + thickness, false );
-		DrawCrosshairRect( 255, 255, 255, 255, x + gap, y - halfThickness, x + gap + size, y - halfThickness + thickness, false );
-		DrawCrosshairRect( 255, 255, 255, 255, x - halfThickness, y - gap - size, x - halfThickness + thickness, y - gap, false );
-		DrawCrosshairRect( 255, 255, 255, 255, x - halfThickness, y + gap, x - halfThickness + thickness, y + gap + size, false );
+		const int red = cg_crosshair_r.GetInt();
+		const int green = cg_crosshair_g.GetInt();
+		const int blue = cg_crosshair_b.GetInt();
+		const int opacity = cg_crosshair_alpha.GetInt();
+		DrawCrosshairRect( red, green, blue, opacity, x - gap - size, y - halfThickness, x - gap, y - halfThickness + thickness, false );
+		DrawCrosshairRect( red, green, blue, opacity, x + gap, y - halfThickness, x + gap + size, y - halfThickness + thickness, false );
+		DrawCrosshairRect( red, green, blue, opacity, x - halfThickness, y - gap - size, x - halfThickness + thickness, y - gap, false );
+		DrawCrosshairRect( red, green, blue, opacity, x - halfThickness, y + gap, x - halfThickness + thickness, y + gap + size, false );
+		if ( cl_crosshairdot.GetBool() )
+			DrawCrosshairRect( red, green, blue, opacity, x - halfThickness, y - halfThickness, x - halfThickness + thickness, y - halfThickness + thickness, false );
 		return;
 	}
 #endif
