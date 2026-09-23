@@ -459,6 +459,13 @@ InitReturnVal_t CSDLMgr::Init()
 	// Default to no XVidMode.
 	SDL_SetHint( "SDL_VIDEO_X11_XVIDMODE", "0" );
 
+#if defined( OSX )
+	// SDL3's Cocoa OpenGL swap can update the drawable on the main thread.
+	// With queued rendering, a synchronous update deadlocks when the main
+	// thread is waiting for the render worker during an app switch.
+	SDL_SetHint( "SDL_MAC_OPENGL_ASYNC_DISPATCH", "1" );
+#endif
+
 	if (!m_bTextMode && !SDL_WasInit(SDL_INIT_VIDEO))
 	{
 		if (SDL_Init(SDL_INIT_VIDEO) == -1)
