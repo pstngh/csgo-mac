@@ -20,7 +20,7 @@ mkdir -p "$bundle/Contents/MacOS"
 cp "$launcher_source/Info.plist" "$bundle/Contents/Info.plist"
 swift_compiler="/Library/Developer/CommandLineTools/usr/bin/swiftc"
 macos_sdk="/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk"
-if [[ -x /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc ]]; then
+if [[ -z "${DEVELOPER_DIR:-}" && -x /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc ]]; then
     swift_compiler="/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
     macos_sdk="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk"
 fi

@@ -10,48 +10,6 @@ private struct Resolution {
     var title: String { "\(width) × \(height)" }
 }
 
-private final class CrosshairPreview: NSView {
-    var crosshairColor: NSColor = .white { didSet { needsDisplay = true } }
-    var barSize = 5 { didSet { needsDisplay = true } }
-    var gap = 1 { didSet { needsDisplay = true } }
-    var thickness = 1 { didSet { needsDisplay = true } }
-    var opacity = 100 { didSet { needsDisplay = true } }
-    var showsDot = false { didSet { needsDisplay = true } }
-    var showsOutline = true { didSet { needsDisplay = true } }
-
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        NSColor(calibratedWhite: 0.20, alpha: 1).setFill()
-        NSBezierPath(roundedRect: bounds, xRadius: 8, yRadius: 8).fill()
-
-        let x = bounds.midX
-        let y = bounds.midY
-        let length = CGFloat(barSize * 2)
-        let separation = CGFloat((gap + 4) * 2)
-        let width = CGFloat(max(thickness, 1) * 2)
-        let half = width / 2
-        var bars = [
-            NSRect(x: x - separation - length, y: y - half, width: length, height: width),
-            NSRect(x: x + separation, y: y - half, width: length, height: width),
-            NSRect(x: x - half, y: y + separation, width: width, height: length),
-            NSRect(x: x - half, y: y - separation - length, width: width, height: length),
-        ]
-        if showsDot {
-            bars.append(NSRect(x: x - half, y: y - half, width: width, height: width))
-        }
-
-        let alpha = CGFloat(opacity) / 100
-        for bar in bars {
-            if showsOutline {
-                NSColor.black.withAlphaComponent(alpha).setFill()
-                NSBezierPath(rect: bar.insetBy(dx: -1, dy: -1)).fill()
-            }
-            crosshairColor.withAlphaComponent(alpha).setFill()
-            NSBezierPath(rect: bar).fill()
-        }
-    }
-}
-
 @main
 final class LauncherApp: NSObject, NSApplicationDelegate {
     private let defaults = UserDefaults.standard
@@ -75,18 +33,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
     private let shadowsPopup = NSPopUpButton()
     private let shadersPopup = NSPopUpButton()
     private let vsyncCheckbox = NSButton(checkboxWithTitle: "Limit frames to display refresh", target: nil, action: nil)
-    private let colorWell = NSColorWell()
-    private let sizeSlider = NSSlider(value: 5, minValue: 1, maxValue: 20, target: nil, action: nil)
-    private let gapSlider = NSSlider(value: 1, minValue: 0, maxValue: 15, target: nil, action: nil)
-    private let thicknessSlider = NSSlider(value: 1, minValue: 1, maxValue: 6, target: nil, action: nil)
-    private let opacitySlider = NSSlider(value: 100, minValue: 20, maxValue: 100, target: nil, action: nil)
-    private let dotCheckbox = NSButton(checkboxWithTitle: "Center dot", target: nil, action: nil)
-    private let outlineCheckbox = NSButton(checkboxWithTitle: "Black outline", target: nil, action: nil)
-    private let sizeValue = NSTextField(labelWithString: "5")
-    private let gapValue = NSTextField(labelWithString: "1")
-    private let thicknessValue = NSTextField(labelWithString: "1")
-    private let opacityValue = NSTextField(labelWithString: "100%")
-    private let preview = CrosshairPreview()
     private let launchButton = NSButton(title: "Launch Game", target: nil, action: nil)
     private let statusLabel = NSTextField(labelWithString: "Choose settings, then launch.")
     private var resolutions: [Resolution] = []
@@ -110,7 +56,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         buildMenus()
         restoreSettings()
         buildWindow()
-        refreshPreview()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -179,17 +124,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         vsyncCheckbox.state = defaults.bool(forKey: "vsync") ? .on : .off
         syncGraphicsQuality()
 
-        sizeSlider.integerValue = storedInteger("size", defaultValue: 5, range: 1...20)
-        gapSlider.integerValue = storedInteger("gap", defaultValue: 1, range: 0...15)
-        thicknessSlider.integerValue = storedInteger("thickness", defaultValue: 1, range: 1...6)
-        opacitySlider.integerValue = storedInteger("opacity", defaultValue: 100, range: 20...100)
-        dotCheckbox.state = defaults.bool(forKey: "dot") ? .on : .off
-        outlineCheckbox.state = defaults.object(forKey: "outline") == nil || defaults.bool(forKey: "outline") ? .on : .off
-
-        let red = storedInteger("red", defaultValue: 255, range: 0...255)
-        let green = storedInteger("green", defaultValue: 255, range: 0...255)
-        let blue = storedInteger("blue", defaultValue: 255, range: 0...255)
-        colorWell.color = NSColor(calibratedRed: CGFloat(red) / 255, green: CGFloat(green) / 255, blue: CGFloat(blue) / 255, alpha: 1)
     }
 
     private func storedInteger(_ key: String, defaultValue: Int, range: ClosedRange<Int>) -> Int {
@@ -198,10 +132,10 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
     }
 
     private func buildWindow() {
-        for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, qualityPopup, colorWell] {
+        for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, qualityPopup] {
             control.widthAnchor.constraint(equalToConstant: 359).isActive = true
         }
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 550, height: 790),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 550, height: 430),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = "CS:GO Mac Launcher"
         window.center()
@@ -233,20 +167,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         graphicsButton.action = #selector(showGraphicsSettings)
         stack.addArrangedSubview(row("Graphics", control: graphicsButton))
 
-        stack.addArrangedSubview(sectionLabel("Crosshair"))
-        stack.addArrangedSubview(row("Color", control: colorWell))
-        stack.addArrangedSubview(row("Size", control: sliderControl(sizeSlider, valueLabel: sizeValue)))
-        stack.addArrangedSubview(row("Gap", control: sliderControl(gapSlider, valueLabel: gapValue)))
-        stack.addArrangedSubview(row("Thickness", control: sliderControl(thicknessSlider, valueLabel: thicknessValue)))
-        stack.addArrangedSubview(row("Opacity", control: sliderControl(opacitySlider, valueLabel: opacityValue)))
-        stack.addArrangedSubview(row("Dot", control: dotCheckbox))
-        stack.addArrangedSubview(row("Outline", control: outlineCheckbox))
-
-        preview.translatesAutoresizingMaskIntoConstraints = false
-        preview.widthAnchor.constraint(equalToConstant: 502).isActive = true
-        preview.heightAnchor.constraint(equalToConstant: 90).isActive = true
-        stack.addArrangedSubview(preview)
-
         launchButton.bezelStyle = .rounded
         launchButton.keyEquivalent = "\r"
         launchButton.target = self
@@ -255,8 +175,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         statusLabel.textColor = .secondaryLabelColor
         stack.addArrangedSubview(statusLabel)
 
-        for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, fullscreenCheckbox,
-                        colorWell, sizeSlider, gapSlider, thicknessSlider, opacitySlider, dotCheckbox, outlineCheckbox] {
+        for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, fullscreenCheckbox] {
             control.target = self
             control.action = #selector(settingsChanged)
         }
@@ -278,16 +197,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         row.spacing = 14
         row.heightAnchor.constraint(greaterThanOrEqualToConstant: 28).isActive = true
         return row
-    }
-
-    private func sliderControl(_ slider: NSSlider, valueLabel: NSTextField) -> NSStackView {
-        slider.widthAnchor.constraint(equalToConstant: 305).isActive = true
-        valueLabel.widthAnchor.constraint(equalToConstant: 46).isActive = true
-        let control = NSStackView(views: [slider, valueLabel])
-        control.orientation = .horizontal
-        control.alignment = .centerY
-        control.spacing = 8
-        return control
     }
 
     @objc private func showGraphicsSettings() {
@@ -358,22 +267,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
 
     @objc private func settingsChanged() {
         syncGraphicsQuality()
-        refreshPreview()
         saveSettings()
-    }
-
-    private func refreshPreview() {
-        sizeValue.stringValue = "\(sizeSlider.integerValue)"
-        gapValue.stringValue = "\(gapSlider.integerValue)"
-        thicknessValue.stringValue = "\(thicknessSlider.integerValue)"
-        opacityValue.stringValue = "\(opacitySlider.integerValue)%"
-        preview.crosshairColor = colorWell.color.usingColorSpace(.deviceRGB) ?? .white
-        preview.barSize = sizeSlider.integerValue
-        preview.gap = gapSlider.integerValue
-        preview.thickness = thicknessSlider.integerValue
-        preview.opacity = opacitySlider.integerValue
-        preview.showsDot = dotCheckbox.state == .on
-        preview.showsOutline = outlineCheckbox.state == .on
     }
 
     private func saveSettings() {
@@ -388,16 +282,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         defaults.set(shadowsPopup.indexOfSelectedItem, forKey: "shadows")
         defaults.set(shadersPopup.indexOfSelectedItem, forKey: "shaderDetail")
         defaults.set(vsyncCheckbox.state == .on, forKey: "vsync")
-        defaults.set(sizeSlider.integerValue, forKey: "size")
-        defaults.set(gapSlider.integerValue, forKey: "gap")
-        defaults.set(thicknessSlider.integerValue, forKey: "thickness")
-        defaults.set(opacitySlider.integerValue, forKey: "opacity")
-        defaults.set(dotCheckbox.state == .on, forKey: "dot")
-        defaults.set(outlineCheckbox.state == .on, forKey: "outline")
-        let color = colorWell.color.usingColorSpace(.deviceRGB) ?? .white
-        defaults.set(Int((color.redComponent * 255).rounded()), forKey: "red")
-        defaults.set(Int((color.greenComponent * 255).rounded()), forKey: "green")
-        defaults.set(Int((color.blueComponent * 255).rounded()), forKey: "blue")
     }
 
     @objc private func launchGame() {
@@ -414,11 +298,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         }
 
         saveSettings()
-        let color = colorWell.color.usingColorSpace(.deviceRGB) ?? .white
-        let red = Int((color.redComponent * 255).rounded())
-        let green = Int((color.greenComponent * 255).rounded())
-        let blue = Int((color.blueComponent * 255).rounded())
-        let alpha = Int((Double(opacitySlider.integerValue) * 255 / 100).rounded())
         let texturePicmip = [2, 1, 0, -1][texturePopup.indexOfSelectedItem]
         let filtering = filteringPopup.indexOfSelectedItem
         let anisotropy = [1, 1, 2, 4, 8, 16][filtering]
@@ -435,15 +314,6 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         mp_use_respawn_waves 0
         mp_respawn_on_death_t 1
         mp_respawn_on_death_ct 1
-        cl_crosshairsize \(sizeSlider.integerValue)
-        cl_crosshairgap \(gapSlider.integerValue)
-        cl_crosshairthickness \(thicknessSlider.integerValue)
-        cl_crosshairdot \(dotCheckbox.state == .on ? 1 : 0)
-        cl_crosshair_drawoutline \(outlineCheckbox.state == .on ? 1 : 0)
-        cg_crosshair_r \(red)
-        cg_crosshair_g \(green)
-        cg_crosshair_b \(blue)
-        cg_crosshair_alpha \(alpha)
         mat_picmip \(texturePicmip)
         mat_trilinear \(filtering == 1 ? 1 : 0)
         mat_forceaniso \(anisotropy)
