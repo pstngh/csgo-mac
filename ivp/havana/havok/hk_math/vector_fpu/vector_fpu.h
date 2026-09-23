@@ -1,13 +1,15 @@
 #ifndef HK_VECTOR_FPU_INCLUDED
 #define HK_VECTOR_FPU_INCLUDED
 
+#include <cstdint>
+
 #define hk_VecFPU_SIZE_DOUBLE 2
-#define hk_VecFPU_MEM_MASK_DOUBLE 0xfffffff0 //16Byte per Block
+#define hk_VecFPU_MEM_MASK_DOUBLE (~uintptr_t(0xf)) //16Byte per Block
 #define hk_VecFPU_MASK_DOUBLE 0xfffffffe
 #define hk_VecFPU_MEMSHIFT_DOUBLE 3 //8 Bytes per Floating Point Number
 
 #define hk_VecFPU_SIZE_FLOAT 4
-#define hk_VecFPU_MEM_MASK_FLOAT 0xfffffff0 //16Byte per Block
+#define hk_VecFPU_MEM_MASK_FLOAT (~uintptr_t(0xf)) //16Byte per Block
 #define hk_VecFPU_MASK_FLOAT 0xfffffffc
 #define hk_VecFPU_MEMSHIFT_FLOAT 2 //4 Bytes per Floating Point Number
 

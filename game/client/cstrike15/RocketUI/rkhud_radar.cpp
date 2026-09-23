@@ -12,6 +12,7 @@ DECLARE_HUD_MESSAGE( RkHudRadar, ProcessSpottedEntityUpdate );
 
 ConVar rocket_hud_radar_info_linger_time( "rocket_hud_radar_info_linger_time", "3", 0, "How long in seconds does the data stay visible after an update" );
 ConVar rocket_hud_radar_scale( "rocket_hud_radar_scale", "0.15", 0, "scale for radar" );
+ConVar rocket_hud_radar_enable( "rocket_hud_radar_enable", "0", FCVAR_ARCHIVE, "Show the experimental square RocketUI radar" );
 
 static void RadarSizeChanged( IConVar *pConvar, const char *szOldValue, float fOldValue )
 {
@@ -349,6 +350,7 @@ bool RkHudRadar::ShouldDraw()
     C_CSPlayer *localPlayer = C_CSPlayer::GetLocalCSPlayer();
 
     return localPlayer &&
+           rocket_hud_radar_enable.GetBool() &&
            cl_drawhud.GetBool() &&
            ( localPlayer->IsAlive() || ( localPlayer->IsObserver() && localPlayer->GetObserverMode() == OBS_MODE_IN_EYE || localPlayer->GetObserverMode() == OBS_MODE_CHASE ) ) &&
            CHudElement::ShouldDraw();

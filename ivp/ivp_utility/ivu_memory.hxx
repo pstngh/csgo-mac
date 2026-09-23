@@ -9,17 +9,16 @@
 
 #include <cstdint> //lwss -x64 fixes
 
-//lwss - x64 changes
-#ifdef __x86_64__
+// Keep transaction allocations 32-byte aligned on every 64-bit target.
+// The old arm64 path used a 32-bit mask and truncated heap pointers.
+#if INTPTR_MAX > INT32_MAX
 #define IVU_MEM_ALIGN 0x50 // grabbed from vphysics retail
-#define IVU_MEM_MASK 0xffffffffffffffe0; //^^
 #define IVU_MEMORY_BLOCK_SIZE 0x7fe0	// size of block loaded by
 #else
 #define IVU_MEM_ALIGN 0x20 //align to chach line data 32Byte
-#define IVU_MEM_MASK 0xffffffe0; 
 #define IVU_MEMORY_BLOCK_SIZE (0x8000-IVU_MEM_ALIGN)	// size of block loaded by
 #endif
-//lwss end
+#define IVU_MEM_MASK (~uintptr_t(0x1f))
 
 struct p_Memory_Elem {
     struct p_Memory_Elem *next;
@@ -91,10 +90,10 @@ void IVP_U_Memory::end_memory_transaction()
 
 //warning: dependency with function neuer_sp_block
 inline void *IVP_U_Memory::align_to_next_adress(void *p) {
-    long adress=(long)p;
+    uintptr_t adress=reinterpret_cast<uintptr_t>(p);
     adress += IVU_MEM_ALIGN-1;
     adress  =adress & IVU_MEM_MASK;
-    return (void*)adress;
+    return reinterpret_cast<void*>(adress);
 }
 
     

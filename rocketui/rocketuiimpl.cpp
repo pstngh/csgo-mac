@@ -540,6 +540,7 @@ void RocketUIImpl::RenderHUDFrame()
     //FinishDrawing();
 
 #if defined ( DX_TO_GL_ABSTRACTION )
+    RocketRender::m_Instance.RestoreGLState();
     m_pDevice->RestoreGLState();
 #endif
 }
@@ -562,6 +563,7 @@ void RocketUIImpl::RenderMenuFrame()
     m_ctxMenu->Render();
 
 #if defined ( DX_TO_GL_ABSTRACTION )
+    RocketRender::m_Instance.RestoreGLState();
     m_pDevice->RestoreGLState();
 #endif
 }

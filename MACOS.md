@@ -34,7 +34,7 @@ cmake -S . -B ../build-macos-arm64 -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DDEDICATED=OFF \
   -DUSE_KISAK_PHYSICS=ON \
-  -DUSE_ROCKETUI=OFF \
+  -DUSE_ROCKETUI=ON \
   -DUSE_SCALEFORM=OFF
 
 cmake --build ../build-macos-arm64
@@ -47,6 +47,8 @@ The port vendors the MIT-licensed [sse2neon](https://github.com/DLTcollab/sse2ne
 ## Game content
 
 This repository does not contain Valve game assets. Follow the upstream acquisition instructions for app 730, depot 731, manifest `7043469183016184477`, and place that content in the sibling `game` directory. You must have the legal right to use the content.
+
+RocketUI also needs the separate [Kisak-Strike-Files](https://github.com/SwagSoftware/Kisak-Strike-Files) GUI files. Copy that repository's `csgo/rocketui` directory into `../game/csgo/rocketui` before launching. Without it, the team-selection and pause menus cannot render.
 
 ## Launch standalone
 
@@ -64,6 +66,8 @@ arch -arm64 ./csgo_osx64 -insecure -novid -windowed -console +map de_dust2
 
 Standalone listen servers intentionally fall back to LAN mode when Steam services are unavailable. Console messages from failed Steam API initialization may still appear; they are non-fatal in this mode.
 
+The experimental square radar and idle chat feed are hidden by default. You can turn the radar back on with `rocket_hud_radar_enable 1` or show idle chat with `rocket_hud_chat_idle_opacity 0.2` in the console. If debug messages appear at the lower left, enter `developer 0` (the launch commands above do not enable developer mode).
+
 ## Status
 
-The port is experimental. Before the offline shim was added, the native client reached the main menu, loaded `de_dust2`, and started an insecure LAN listen server. The shim builds and loads, but a full GUI retest requires an active macOS display. This client build does not support headless map loading; without a display, SDL/OpenGL initialization fails.
+The port is experimental. On an Apple Silicon Mac, the native client has loaded `de_dust2`, shown the RocketUI team menu, joined a local match, and run combat with bots without Steam. Some legacy assets and features are still incomplete. This client build does not support headless map loading; without a display, SDL/OpenGL initialization fails.

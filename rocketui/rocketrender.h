@@ -9,6 +9,7 @@ private:
     void        *m_glContext;
     int         m_width;
     int         m_height;
+    int         m_previousMatrixMode;
     bool        m_transformEnabled;
     /** singleton support **/
 public:
@@ -17,6 +18,7 @@ public:
     RocketRender();
 
     void PrepareGLState();
+    void RestoreGLState();
 
     /// Called by RmlUi when it wants to render geometry that it does not wish to optimise.
     void RenderGeometry(Rml::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rml::TextureHandle texture, const Rml::Vector2f& translation) override;

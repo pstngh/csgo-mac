@@ -314,10 +314,15 @@ foreach(library ${LIBRARIES})
 	)
 
 	#Kisak-Strike memoverride.cpp
-	target_compile_definitions(${NAME} PRIVATE -DLINUX -D_LINUX -DPOSIX -DCOMPILER_GCC -DBASE -DNDEBUG -DGNUC)
+	if(APPLE)
+		target_compile_definitions(${NAME} PRIVATE POSIX OSX _OSX PLATFORM_64BITS COMPILER_GCC BASE NDEBUG GNUC)
+	else()
+		target_compile_definitions(${NAME} PRIVATE LINUX _LINUX POSIX COMPILER_GCC BASE NDEBUG GNUC)
+	endif()
 	target_include_directories(${NAME} PRIVATE ../../public)
-	# e2k workaround
-	if(NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "e2k")
+	# On macOS these standalone libraries must not depend on Valve's allocator
+	# symbols from the game binary; use the system allocator instead.
+	if(NOT APPLE AND NOT CMAKE_SYSTEM_PROCESSOR STREQUAL "e2k")
 		target_sources(${NAME} PRIVATE ../../public/tier0/memoverride.cpp)
 	endif()
 	#end
@@ -325,6 +330,10 @@ foreach(library ${LIBRARIES})
 	   VERSION ${PROJECT_VERSION}
 	   SOVERSION ${PROJECT_VERSION_MAJOR}
 	)
+	if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+		set_target_properties(${NAME} PROPERTIES
+			LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../game/bin/osx64")
+	endif()
 
 	if (MSVC)
 		target_compile_options(${NAME} PUBLIC "/MP")

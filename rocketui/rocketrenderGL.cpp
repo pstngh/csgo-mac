@@ -5,7 +5,6 @@
 #include <gl/Gl.h>
 #include <gl/Glu.h>
 #elif defined RMLUI_PLATFORM_MACOSX
-#include <AGL/agl.h>
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <OpenGL/glext.h>
@@ -29,6 +28,17 @@ RocketRender::RocketRender() { }
 
 void RocketRender::PrepareGLState()
 {
+    // RmlUi draws with raw OpenGL while the game uses GLM's cached state.
+    // In particular, leaving its client-side vertex arrays enabled makes
+    // GLM's later texture-preload draw read RmlUi's expired vertex pointers.
+    glGetIntegerv(GL_MATRIX_MODE, &m_previousMatrixMode);
+    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    glPushClientAttrib(GL_CLIENT_ALL_ATTRIB_BITS);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_CULL_FACE);
 
@@ -95,6 +105,17 @@ void RocketRender::PrepareGLState()
     //glStencilFunc( GL_GEQUAL, 253, -1 );
     //glAlphaFunc(GL_GEQUAL, 0);
 
+}
+
+void RocketRender::RestoreGLState()
+{
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(m_previousMatrixMode);
+    glPopClientAttrib();
+    glPopAttrib();
 }
 
 void RocketRender::RenderGeometry( Rml::Vertex *vertices, int num_vertices, int *indices, int num_indices,

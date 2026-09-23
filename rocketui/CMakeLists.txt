@@ -28,7 +28,15 @@ target_sources(${OUTBINNAME} PRIVATE customelements/KisakURL.cpp)
 if( POSIX )
     #OpenGL rendering imp
     target_sources(${OUTBINNAME} PRIVATE rocketrenderGL.cpp)
-    target_link_libraries(${OUTBINNAME} SDL2)
+    if( APPLE )
+        find_library(ROCKETUI_SDL2_LIBRARY SDL2
+            PATHS /opt/homebrew/opt/sdl2/lib
+            NO_DEFAULT_PATH
+            REQUIRED)
+        target_link_libraries(${OUTBINNAME} "${ROCKETUI_SDL2_LIBRARY}")
+    else()
+        target_link_libraries(${OUTBINNAME} SDL2)
+    endif()
 else()
     message(FATAL_ERROR "not implemented for windows")
 endif()
@@ -37,4 +45,9 @@ endif()
 target_link_libraries(${OUTBINNAME} RmlCore RmlDebugger) #thirdparty/RmlUI
 
 #target_link_libraries(${OUTBINNAME} ${SRCDIR}/thirdparty/RmlUi/build/libRmlDebugger.so)
-target_link_libraries(${OUTBINNAME} GL tier2_client tier3_client libtogl_client)
+if( APPLE )
+    target_link_libraries(${OUTBINNAME} "-framework OpenGL")
+else()
+    target_link_libraries(${OUTBINNAME} GL)
+endif()
+target_link_libraries(${OUTBINNAME} tier2_client tier3_client libtogl_client)
