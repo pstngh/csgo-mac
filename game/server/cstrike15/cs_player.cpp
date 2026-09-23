@@ -12603,8 +12603,14 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 		return  NULL;
 
 	CBaseEntity *pItem = NULL;
+	// These armor pickups are native entities, not economy schema items.  Skip
+	// loadout and random-item searches on every spawn or purchase.
+	const bool bNativeArmorItem = !pScriptItem &&
+		( !V_strcmp( pchName, "item_kevlar" ) ||
+		  !V_strcmp( pchName, "item_assaultsuit" ) ||
+		  !V_strcmp( pchName, "item_heavyassaultsuit" ) );
 
-	if ( ( !pScriptItem || !pScriptItem->IsValid() ) && !( CSGameRules() && CSGameRules()->IsPlayingTraining() ) )
+	if ( !bNativeArmorItem && ( !pScriptItem || !pScriptItem->IsValid() ) && !( CSGameRules() && CSGameRules()->IsPlayingTraining() ) )
 	{
 		CUtlVector< CEconItemView* > matchingWeapons;
 		FindMatchingWeaponsForTeamLoadout( pchName, GetTeamNumber(), false, matchingWeapons );
@@ -12633,7 +12639,11 @@ CBaseEntity	*CCSPlayer::GiveNamedItem( const char *pchName, int iSubType /*= 0*/
 		return NULL;
 
 //#if !defined( NO_STEAM_GAMECOORDINATOR )
-	if ( pScriptItem && pScriptItem->IsValid() )
+	if ( bNativeArmorItem )
+	{
+		pItem = CreateEntityByName( pchName );
+	}
+	else if ( pScriptItem && pScriptItem->IsValid() )
 	{
 		// Generate a weapon directly from that item
 		pItem = ItemGeneration()->GenerateItemFromScriptData( pScriptItem, GetLocalOrigin(), vec3_angle, pScriptItem->GetStaticData()->GetItemClass() );
