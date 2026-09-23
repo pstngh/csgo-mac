@@ -3052,16 +3052,18 @@ void CWeaponCSBase::Spawn()
 
 #if defined( OSX )
 	// Use the correct model-specific paint atlas for each weapon.
+	CEconItemView *pItem = GetEconItemView();
+	const int itemDefIndex = pItem && pItem->IsValid() ? pItem->GetItemIndex() : 0;
+	// The silenced M4A1-S and USP-S use the M4A1 and P2000 entity classes.
 	const int paintKit = GetCSWeaponID() == WEAPON_AWP ? 279 :
 		GetCSWeaponID() == WEAPON_AK47 ? 801 :
-		!V_strcmp( GetClassname(), "weapon_m4a1_silencer" ) ? 587 :
-		!V_strcmp( GetClassname(), "weapon_usp_silencer" ) ? 637 : 0;
+		itemDefIndex == 60 ? 587 :
+		itemDefIndex == 61 ? 637 : 0;
 	if ( paintKit != 0 )
 	{
 		m_nFallbackPaintKit = paintKit;
 		m_nFallbackSeed = 1;
 		m_flFallbackWear = 0.18f;
-		CEconItemView *pItem = GetEconItemView();
 		if ( pItem && pItem->IsValid() )
 		{
 			pItem->SetOrAddAttributeValueByName( "set item texture prefab", paintKit );
