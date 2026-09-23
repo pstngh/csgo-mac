@@ -12,5 +12,5 @@ set(CMAKE_RANLIB "/Library/Developer/CommandLineTools/usr/bin/ranlib" CACHE FILE
 set(CMAKE_INSTALL_NAME_TOOL "/Library/Developer/CommandLineTools/usr/bin/install_name_tool" CACHE FILEPATH "" FORCE)
 
 set(CMAKE_PREFIX_PATH "/opt/homebrew" CACHE STRING "" FORCE)
-set(CMAKE_BUILD_RPATH "@loader_path;/opt/homebrew/lib" CACHE STRING "" FORCE)
-set(CMAKE_INSTALL_RPATH "@loader_path;/opt/homebrew/lib" CACHE STRING "" FORCE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE CACHE BOOL "" FORCE)
+set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/../../../bin/osx64;/opt/homebrew/lib" CACHE STRING "" FORCE)

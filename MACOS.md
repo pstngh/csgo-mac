@@ -16,7 +16,6 @@ This branch ports the Kisak-Strike client, listen server, renderer, VGUI, VScrip
 - macOS Command Line Tools
 - CMake and Ninja
 - Homebrew's SDL 2 compatibility package
-- An arm64 `libsteam_api.dylib` from your own Steam installation for linking and local runtime use
 - Legally acquired CS:GO game content
 
 Install the build dependencies with Homebrew:
@@ -31,18 +30,17 @@ Kisak-Strike writes runtime binaries to a sibling `game` directory. Clone this r
 
 ```sh
 cmake -S . -B ../build-macos-arm64 -G Ninja \
-  -DCMAKE_TOOLCHAIN_FILE=cmake/toolchains/macos-arm64.cmake \
+  -DCMAKE_TOOLCHAIN_FILE="$PWD/cmake/toolchains/macos-arm64.cmake" \
   -DCMAKE_BUILD_TYPE=Release \
   -DDEDICATED=OFF \
   -DUSE_KISAK_PHYSICS=ON \
   -DUSE_ROCKETUI=OFF \
-  -DUSE_SCALEFORM=OFF \
-  -DSTEAM_API_LIBRARY="/absolute/path/to/arm64/libsteam_api.dylib"
+  -DUSE_SCALEFORM=OFF
 
 cmake --build ../build-macos-arm64
 ```
 
-The library passed as `STEAM_API_LIBRARY` must contain an arm64 slice. The build copies it into the two local runtime module directories. It is not included in this repository, and the Steam desktop client does not need to run when launching standalone.
+The build compiles an offline Steam API shim from source and places it beside the game modules. The Steam desktop client and its `libsteam_api.dylib` are not required for this standalone build.
 
 The port vendors the MIT-licensed [sse2neon](https://github.com/DLTcollab/sse2neon) compatibility headers used to translate Source's SSE intrinsics to ARM NEON.
 
@@ -68,4 +66,4 @@ Standalone listen servers intentionally fall back to LAN mode when Steam service
 
 ## Status
 
-The port is experimental. The native client reaches the main menu, loads `de_dust2`, and starts an insecure LAN listen server. Additional hardware and macOS-version testing is welcome.
+The port is experimental. Before the offline shim was added, the native client reached the main menu, loaded `de_dust2`, and started an insecure LAN listen server. The shim builds and loads, but a full GUI retest requires an active macOS display. This client build does not support headless map loading; without a display, SDL/OpenGL initialization fails.

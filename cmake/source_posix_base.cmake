@@ -13,7 +13,9 @@ set(LIBPUBLIC "${SRCDIR}/lib/public${PLATSUBDIR}") #this is where static libs ar
 #link_directories(${LIBPUBLIC}) #add to search path for linker - lwss: use the project name instead of linking the files manually.
 set(LIBCOMMON "${SRCDIR}/lib/common${PLATSUBDIR}")
 set(DEVTOOLS "${SRCDIR}/devtools")
-if(OSXALL)
+if(OSXALL AND TARGET steam_api_offline)
+    set(STEAM_API_LIBRARY steam_api_offline)
+elseif(OSXALL)
     set(STEAM_API_LIBRARY "" CACHE FILEPATH "Path to an arm64-capable libsteam_api.dylib")
     if(NOT EXISTS "${STEAM_API_LIBRARY}")
         message(FATAL_ERROR "Set STEAM_API_LIBRARY to an arm64-capable libsteam_api.dylib from your Steam installation")

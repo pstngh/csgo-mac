@@ -20,6 +20,12 @@
 cmake_minimum_required(VERSION 3.16)
 project(KisakStrike)
 
+# Bundled third-party projects still declare CMake 2.x/3.0 minimums. CMake 4
+# rejects those unless a supported policy floor is supplied for subdirectories.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0" AND NOT DEFINED CMAKE_POLICY_VERSION_MINIMUM)
+    set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+endif()
+
 include(kisak-strike-build-options.cmake)
 
 if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
@@ -37,6 +43,15 @@ if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
         SSE2NEON_PRECISE_SQRT=1
         SSE2NEON_PRECISE_DIV=1
     )
+
+    add_library(steam_api_offline SHARED thirdparty/steam_api_offline/steam_api_offline.cpp)
+    target_include_directories(steam_api_offline PRIVATE "${CMAKE_SOURCE_DIR}/public")
+    target_compile_definitions(steam_api_offline PRIVATE STEAM_API_EXPORTS GNUC VERSION_SAFE_STEAM_API_INTERFACES)
+    set_target_properties(steam_api_offline PROPERTIES
+        OUTPUT_NAME steam_offline
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../game/bin/osx64"
+        INSTALL_NAME_DIR "@loader_path"
+        BUILD_WITH_INSTALL_NAME_DIR TRUE)
 endif()
 
 add_subdirectory(appframework)
@@ -112,16 +127,13 @@ add_subdirectory(launcher)
 add_subdirectory(launcher_main) #The actual executable that just dlopen's launcher
 
 if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
-    # The Steam API library is supplied by the local Steam installation at
-    # configure time. Modules in both directories load it beside themselves;
-    # keep the proprietary binary out of the source repository.
-    set(MACOS_GAME_BIN "${CMAKE_SOURCE_DIR}/../game/bin/osx64")
+    # Client and server modules load the offline shim beside themselves.
     set(MACOS_CSGO_BIN "${CMAKE_SOURCE_DIR}/../game/csgo/bin/osx64")
     add_custom_target(macos_steam_api_runtime ALL
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${MACOS_GAME_BIN}" "${MACOS_CSGO_BIN}"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${STEAM_API_LIBRARY}" "${MACOS_GAME_BIN}/libsteam_api.dylib"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${STEAM_API_LIBRARY}" "${MACOS_CSGO_BIN}/libsteam_api.dylib"
-        COMMENT "Copying the locally supplied arm64 Steam API runtime"
+        DEPENDS steam_api_offline
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${MACOS_CSGO_BIN}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "$<TARGET_FILE:steam_api_offline>" "${MACOS_CSGO_BIN}/libsteam_offline.dylib"
+        COMMENT "Copying the offline Steam API shim for game modules"
         VERBATIM)
 endif()
 
