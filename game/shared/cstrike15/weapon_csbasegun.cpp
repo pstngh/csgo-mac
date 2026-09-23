@@ -148,12 +148,30 @@ void CWeaponCSBaseGun::Drop( const Vector &vecVelocity )
 	BaseClass::Drop( vecVelocity );
 }
 
+#if defined( OSX )
+static void MacAWPToggleScopeOnPress( CWeaponCSBaseGun *pWeapon, CCSPlayer *pPlayer )
+{
+	if ( pWeapon->GetCSWeaponID() != WEAPON_AWP ||
+		 !( pPlayer->m_afButtonPressed & ( IN_ATTACK2 | IN_ZOOM ) ) )
+		return;
+
+	// A new click toggles scope even if the weapon is busy after a shot.
+	// The base weapon handler skips AWP zoom input, preserving press edges.
+	pWeapon->SecondaryAttack();
+	pPlayer->m_bResumeZoom = false;
+}
+#endif
+
 void CWeaponCSBaseGun::ItemBusyFrame()
 {
 	CCSPlayer *pPlayer = GetPlayerOwner();
 
 	if ( !pPlayer )
 		return;
+
+#if defined( OSX )
+	MacAWPToggleScopeOnPress( this, pPlayer );
+#endif
 
 	// if we're scoped during a reload, pull us out of the scope for the duration (and set resumezoom so we'll re-zoom when reloading is done)
 	if ( HasZoom() && (IsZoomed() || pPlayer->m_bIsScoped) && m_bInReload )
@@ -174,6 +192,10 @@ void CWeaponCSBaseGun::ItemPostFrame()
 
 	if ( !pPlayer )
 		return;
+
+#if defined( OSX )
+	MacAWPToggleScopeOnPress( this, pPlayer );
+#endif
 
 	// smoother out the accuracy a bit
 	//float flFOV = GetFOVForAccuracy();

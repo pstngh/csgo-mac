@@ -2073,6 +2073,10 @@ void Host_ReadConfiguration( const int iController, const bool readDefault )
 #if defined( OSX )
 	// Keep the physical backtick key available even after an old config is loaded.
 	Key_SetBinding( KEY_BACKQUOTE, "toggleconsole" );
+#if defined( CSTRIKE15 )
+	// Cycle all three first-person viewmodel modes with K.
+	Key_SetBinding( KEY_K, "incrementvar cg_drawviewmodel 0 2 1" );
+#endif
 #else
 	if (NULL == Key_NameForBinding("toggleconsole"))
 	{

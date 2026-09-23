@@ -946,12 +946,20 @@ void CWeaponCSBase::ItemPostFrame()
 	{
 		ItemPostFrame_ProcessPrimaryAttack( pPlayer );
 	}
-	else if ( ( pPlayer->m_nButtons & IN_ZOOM ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ) )
+	else if ( ( pPlayer->m_nButtons & IN_ZOOM ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+#if defined( OSX )
+		&& GetCSWeaponID() != WEAPON_AWP
+#endif
+		)
 	{
 		if ( ItemPostFrame_ProcessZoomAction( pPlayer ) )
 			pPlayer->m_nButtons &= ~IN_ZOOM;
 	}
-	else if ( (pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime ))
+	else if ( (pPlayer->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack <= gpGlobals->curtime )
+#if defined( OSX )
+		&& GetCSWeaponID() != WEAPON_AWP
+#endif
+		)
 	{
 		if ( ItemPostFrame_ProcessSecondaryAttack( pPlayer ) )
 			pPlayer->m_nButtons &= ~IN_ATTACK2;

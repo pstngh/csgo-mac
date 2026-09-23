@@ -123,7 +123,7 @@ static void ValidateMacDrawViewmodel( IConVar *pVar, const char *, float )
 	if ( V_strcmp( var.GetString(), pModes[nMode] ) )
 		var.SetValue( nMode );
 }
-ConVar drawviewmodel( "drawviewmodel", "2", FCVAR_ARCHIVE,
+ConVar cg_drawviewmodel( "cg_drawviewmodel", "2", FCVAR_ARCHIVE,
 	"0: hide weapon and hands; 1: show weapon only; 2: show weapon and hands.",
 	true, 0, true, 2, ValidateMacDrawViewmodel );
 #endif
@@ -1409,7 +1409,7 @@ bool CViewRender::ShouldDrawViewModel( bool bDrawViewmodel )
 		return false;
 
 #if defined( OSX ) && defined( CSTRIKE15 )
-	if ( drawviewmodel.GetInt() == 0 )
+	if ( cg_drawviewmodel.GetInt() == 0 )
 		return false;
 #endif
 
