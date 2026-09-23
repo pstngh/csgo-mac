@@ -108,7 +108,17 @@ static ConVar con_trace( "con_trace", "0", FCVAR_MATERIAL_SYSTEM_THREAD, "Print 
 static ConVar con_notifytime( "con_notifytime","8", FCVAR_MATERIAL_SYSTEM_THREAD, "How long to display recent console text to the upper part of the game window" );
 static ConVar con_times("contimes", "8", FCVAR_MATERIAL_SYSTEM_THREAD, "Number of console lines to overlay for debugging." );
 static ConVar con_drawnotify( "con_drawnotify", IsGameConsole() ? "0" : "1", 0, "Disables drawing of notification area (for taking screenshots)." );
+#if defined( OSX )
+static void KeepMacConsoleEnabled( IConVar *pVar, const char *, float )
+{
+	ConVarRef var( pVar );
+	if ( !var.GetBool() )
+		var.SetValue( 1 );
+}
+static ConVar con_enable("con_enable", "1", FCVAR_ARCHIVE, "Allows the console to be activated.", KeepMacConsoleEnabled);
+#else
 static ConVar con_enable("con_enable", "0", FCVAR_ARCHIVE, "Allows the console to be activated.");
+#endif
 static ConVar con_filter_enable ( "con_filter_enable","0", FCVAR_MATERIAL_SYSTEM_THREAD | FCVAR_RELEASE, "Filters console output based on the setting of con_filter_text. 1 filters completely, 2 displays filtered text brighter than other text." );
 static ConVar con_filter_text ( "con_filter_text","", FCVAR_MATERIAL_SYSTEM_THREAD | FCVAR_RELEASE, "Text with which to filter console spew. Set con_filter_enable 1 or 2 to activate." );
 static ConVar con_filter_text_out ( "con_filter_text_out","", FCVAR_MATERIAL_SYSTEM_THREAD | FCVAR_RELEASE, "Text with which to filter OUT of console spew. Set con_filter_enable 1 or 2 to activate." );

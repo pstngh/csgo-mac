@@ -55,18 +55,20 @@ RocketUI also needs the separate [Kisak-Strike-Files](https://github.com/SwagSof
 Run from the game directory:
 
 ```sh
-arch -arm64 ./csgo_osx64 -insecure -novid -windowed -console
+arch -arm64 ./csgo_osx64 -insecure -novid -windowed
 ```
 
 To start a local map directly:
 
 ```sh
-arch -arm64 ./csgo_osx64 -insecure -novid -windowed -console +map de_dust2
+arch -arm64 ./csgo_osx64 -insecure -novid -windowed +map de_dust2
 ```
 
 Standalone listen servers intentionally fall back to LAN mode when Steam services are unavailable. Console messages from failed Steam API initialization may still appear; they are non-fatal in this mode.
 
-The experimental square radar and idle chat feed are hidden by default. You can turn the radar back on with `rocket_hud_radar_enable 1` or show idle chat with `rocket_hud_chat_idle_opacity 0.2` in the console. If debug messages appear at the lower left, enter `developer 0` (the launch commands above do not enable developer mode).
+Backtick opens the developer console. The Mac gameplay preset locks the normal world FOV to 80, weapon viewmodel FOV to 90, mouse sensitivity to 1.029863, and `m_pitch` to 0.018. The persistent in-game HUD is crosshair-only; the sniper scope overlay and deliberately opened buy/team menus remain available. Sniper rifles keep a static crosshair while unscoped; the scope uses its own reticle. The AWP cycles between unscoped and its first zoom level only. The default CT M4 slot uses the silenced M4A1-S from the legally acquired game content.
+
+For the local listen-server host, the preset keeps `sv_cheats` enabled, god mode active, the account at the server's maximum balance, and the active weapon's clip full. These server-side benefits do not override a remote server's rules or apply to bots and other players. A remote server may also impose its own mouse-pitch limit. The preset is compiled into this Mac build rather than stored in `config.cfg`; editing that file will not change the local locked values.
 
 ## Status
 

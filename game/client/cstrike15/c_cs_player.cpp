@@ -7347,10 +7347,12 @@ float C_CSPlayer::GetFOV( void ) const
 			sv_cheats = cvar->FindVar( "sv_cheats" );
 		}
 
+#if !defined( OSX )
 		if ( sv_cheats->GetBool() && fov_cs_debug.GetInt() > 0 )
 		{
 			return fov_cs_debug.GetInt();
 		}
+#endif
 	}
 
 #ifdef IRONSIGHT

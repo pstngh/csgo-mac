@@ -358,7 +358,13 @@ void CWeaponCSBaseGun::SecondaryAttack()
 
 	if ( HasZoom() )
 	{
-		if ( ++m_zoomLevel > GetZoomLevels() )
+		int nZoomLevels = GetZoomLevels();
+#if defined( OSX )
+		// The Mac AWP cycles between unscoped and first zoom only.
+		if ( GetCSWeaponID() == WEAPON_AWP )
+			nZoomLevels = MIN( nZoomLevels, 1 );
+#endif
+		if ( ++m_zoomLevel > nZoomLevels )
 			m_zoomLevel = 0;
 
 		bool bIsSniperRifle = GetWeaponType() == WEAPONTYPE_SNIPER_RIFLE;

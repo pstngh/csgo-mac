@@ -133,7 +133,17 @@ ConVar cl_spec_mode(
 ConVar cl_draw_only_deathnotices( "cl_draw_only_deathnotices", "0", FCVAR_CHEAT, "For drawing only the crosshair and death notices (used for moviemaking)" );
 ConVar cl_radar_square_with_scoreboard( "cl_radar_square_with_scoreboard", "1", FCVAR_ARCHIVE | FCVAR_RELEASE, "If set, the radar will toggle to square when the scoreboard is visible." );
 
+#if defined( OSX )
+static void KeepMacDefaultFov( IConVar *pVar, const char *, float )
+{
+	ConVarRef var( pVar );
+	if ( V_strcmp( var.GetString(), "80" ) )
+		var.SetValue( 80 );
+}
+ConVar default_fov( "default_fov", "80", FCVAR_CHEAT, "Locked default field of view for the standalone Mac build.", KeepMacDefaultFov );
+#else
 ConVar default_fov( "default_fov", "90", FCVAR_CHEAT );
+#endif
 
 static IClientMode *g_pClientMode[ MAX_SPLITSCREEN_PLAYERS ];
 IClientMode *GetClientMode()

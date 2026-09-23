@@ -109,7 +109,17 @@ static ConVar v_centerspeed( "v_centerspeed","500" );
 
 // 54 degrees approximates a 35mm camera - we determined that this makes the viewmodels
 // and motions look the most natural.
+#if defined( OSX ) && defined( CSTRIKE15 )
+static void KeepMacViewmodelFov( IConVar *pVar, const char *, float )
+{
+	ConVarRef var( pVar );
+	if ( V_strcmp( var.GetString(), "90" ) )
+		var.SetValue( 90 );
+}
+ConVar v_viewmodel_fov( "viewmodel_fov", "90", FCVAR_ARCHIVE, "Locked weapon viewmodel field of view for the standalone Mac build.", KeepMacViewmodelFov );
+#else
 ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_ARCHIVE );
+#endif
 
 ConVar mat_viewportscale( "mat_viewportscale", "1.0", FCVAR_CHEAT, "Scale down the main viewport (to reduce GPU impact on CPU profiling)",
 								  true, (1.0f / 640.0f), true, 1.0f );

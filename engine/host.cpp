@@ -2070,11 +2070,16 @@ void Host_ReadConfiguration( const int iController, const bool readDefault )
 	Key_SetBinding( KEY_ESCAPE, "cancelselect" );
 
 	// Make sure that something is always bound to console
+#if defined( OSX )
+	// Keep the physical backtick key available even after an old config is loaded.
+	Key_SetBinding( KEY_BACKQUOTE, "toggleconsole" );
+#else
 	if (NULL == Key_NameForBinding("toggleconsole"))
 	{
 		// If nothing is bound to it then bind it to '
 		Key_SetBinding( KEY_BACKQUOTE, "toggleconsole" );
 	}
+#endif
 
 	SetupDefaultAskConnectAcceptKey();
 

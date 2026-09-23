@@ -158,6 +158,15 @@ static void SV_CheatsChanged_f( IConVar *pConVar, const char *pOldString, float 
         return;
 
     ConVarRef var( pConVar );
+#if defined( OSX )
+	// This standalone Mac preset applies only to the user's local listen server.
+	// A remote server's replicated sv_cheats value is never overridden.
+	if ( sv.IsActive() && !sv.IsDedicated() && !var.GetBool() )
+	{
+		var.SetValue( 1 );
+		return;
+	}
+#endif
     if ( var.GetInt() == 0 )
     {
         RevertAllModifiedLocalState();
@@ -3443,6 +3452,12 @@ void SV_Frame( bool finalTick )
         return;
     }
 
+#if defined( OSX )
+	// Establish cheats as soon as a local map starts, including after map changes.
+	if ( !sv.IsDedicated() && !sv_cheats.GetBool() )
+		sv_cheats.SetValue( 1 );
+#endif
+
     g_ServerGlobalVariables.frametime = host_state.interval_per_tick;
 
     bool bIsSimulating = SV_IsSimulating();
@@ -3538,4 +3553,3 @@ void SV_SetSteamCrashComment( void )
 #endif
 	}
 }
-

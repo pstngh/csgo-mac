@@ -55,12 +55,26 @@ extern const ConVar *sv_cheats;
 ConVar cl_mouselook_roll_compensation( "cl_mouselook_roll_compensation", "1", 0, "In Portal and Paint, if your view is being rolled, compensate for that. So mouse movements are always relative to the screen." );
 #endif
 
+#if defined( OSX ) && defined( CSTRIKE15 )
+static void KeepMacMouseValue( IConVar *pVar, const char *, float )
+{
+	ConVarRef var( pVar );
+	const char *pLockedValue = !V_strcmp( var.GetName(), "m_pitch" ) ? "0.018" : "1.029863";
+	if ( V_strcmp( var.GetString(), pLockedValue ) )
+		var.SetValue( pLockedValue );
+}
+#endif
+
 
 class ConVar_m_pitch : public ConVar_ServerBounded
 {
 public:
 	ConVar_m_pitch() : 
+#if defined( OSX ) && defined( CSTRIKE15 )
+		ConVar_ServerBounded( "m_pitch","0.018", FCVAR_ARCHIVE|FCVAR_SS, "Mouse pitch factor.", KeepMacMouseValue )
+#else
 		ConVar_ServerBounded( "m_pitch","0.022", FCVAR_ARCHIVE|FCVAR_SS, "Mouse pitch factor." )
+#endif
 	{
 	}
 	
@@ -97,7 +111,11 @@ extern ConVar cam_idealyaw;
 extern ConVar cam_idealpitch;
 extern ConVar thirdperson_platformer;
 
+#if defined( OSX ) && defined( CSTRIKE15 )
+ConVar sensitivity( "sensitivity","1.029863", FCVAR_ARCHIVE, "Mouse sensitivity.", true, 0.0001f, true, 1000, KeepMacMouseValue );
+#else
 ConVar sensitivity( "sensitivity","2.5", FCVAR_ARCHIVE, "Mouse sensitivity.", true, 0.0001f, true, 1000 );
+#endif
 
 static ConVar m_side( "m_side","0.8", FCVAR_ARCHIVE, "Mouse side factor.", true, 0.0001f, true, 1000 );
 static ConVar m_yaw( "m_yaw","0.022", FCVAR_ARCHIVE, "Mouse yaw factor.", true, 0.0001f, true, 1000 );

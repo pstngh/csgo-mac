@@ -1467,6 +1467,15 @@ void CCSPlayer::Spawn()
 
 	BaseClass::Spawn();
 
+#if defined( OSX )
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+	{
+		AddFlag( FL_GODMODE );
+		if ( CSGameRules() )
+			m_iAccount = CSGameRules()->GetMaxMoney();
+	}
+#endif
+
 	// After base class spawn strips our last-round items and grants defaults, give us our heavy armor if we've been chosen this round
 	if ( bStartsWithHeavyArmorThisRound )
 	{
@@ -4029,6 +4038,27 @@ void CCSPlayer::PostThink()
 {
 	BaseClass::PostThink();
 
+#if defined( OSX )
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+	{
+		// Keep the local player's protections and funds across rounds and
+		// after purchases, without granting them to bots or remote players.
+		AddFlag( FL_GODMODE );
+		if ( CSGameRules() )
+			m_iAccount = CSGameRules()->GetMaxMoney();
+
+		// A full active clip every frame means firing never starts a reload.
+		CWeaponCSBase *pWeapon = GetActiveCSWeapon();
+		if ( pWeapon )
+		{
+			if ( pWeapon->GetMaxClip1() > 0 )
+				pWeapon->m_iClip1 = pWeapon->GetMaxClip1();
+			if ( pWeapon->GetMaxClip2() > 0 )
+				pWeapon->m_iClip2 = pWeapon->GetMaxClip2();
+		}
+	}
+#endif
+
 	// if we're spawning, clear it
 	if ( m_bIsSpawning )
 		m_bIsSpawning = false;
@@ -5792,6 +5822,11 @@ void CCSPlayer::InitializeAccount( int amount )
 
 	m_iAccount = clamp<int, int, int>( m_iAccount, 0, MaxAmount );
 
+#if defined( OSX )
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+		m_iAccount = MaxAmount;
+#endif
+
 	if ( CSGameRules()->ShouldRecordMatchStats() )
 	{
 		m_iMatchStats_CashEarned.GetForModify( CSGameRules()->GetTotalRoundsPlayed() ) = m_iAccount;
@@ -6031,6 +6066,11 @@ void CCSPlayer::AddAccount( int amount, bool bTrackChange, bool bItemBought, con
 	}
 		
 	m_iAccount = clamp( (int)m_iAccount, 0, CSGameRules()->GetMaxMoney() );
+
+#if defined( OSX )
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+		m_iAccount = CSGameRules()->GetMaxMoney();
+#endif
 
 	CSingleUserRecipientFilter user( this );
 

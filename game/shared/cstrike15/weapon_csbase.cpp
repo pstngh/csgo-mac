@@ -1948,7 +1948,28 @@ void CWeaponCSBase::DrawCrosshair()
 	if ( pPlayer->HasShield() && pPlayer->IsShieldDrawn() == true )
 		return;
 	if ( GetWeaponType() == WEAPONTYPE_SNIPER_RIFLE && !weapon_debug_spread_show.GetBool() )
+	{
+#if defined( OSX )
+		// The scope draws its own reticle; keep the fixed crosshair unscoped only.
+		if ( pPlayer->m_bIsScoped )
+			return;
+		// Keep a fixed, AK-style reticle on sniper rifles in this Mac build.
+		// It is independent of movement, recoil and crosshair style.
+		const int x = ScreenWidth() / 2;
+		const int y = ScreenHeight() / 2;
+		const int size = MAX( 1, RoundFloatToInt( YRES( cl_crosshairsize.GetFloat() ) ) );
+		const int thickness = MAX( 1, RoundFloatToInt( YRES( cl_crosshairthickness.GetFloat() ) ) );
+		const int gap = MAX( 1, RoundFloatToInt( cl_crosshairgap.GetFloat() + 4.0f ) );
+		const int halfThickness = thickness / 2;
+		DrawCrosshairRect( r, g, b, alpha, x - gap - size, y - halfThickness, x - gap, y - halfThickness + thickness, bAdditive );
+		DrawCrosshairRect( r, g, b, alpha, x + gap, y - halfThickness, x + gap + size, y - halfThickness + thickness, bAdditive );
+		DrawCrosshairRect( r, g, b, alpha, x - halfThickness, y - gap - size, x - halfThickness + thickness, y - gap, bAdditive );
+		DrawCrosshairRect( r, g, b, alpha, x - halfThickness, y + gap, x - halfThickness + thickness, y + gap + size, bAdditive );
 		return;
+#else
+		return;
+#endif
+	}
 	float fHalfFov = DEG2RAD( pPlayer->GetFOV() ) * 0.5f;
 	float flInaccuracy = GetInaccuracy();
 	float flSpread = GetSpread();

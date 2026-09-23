@@ -254,14 +254,11 @@ static bool GetGlyphsForCharacter( CTFontRef hFont, wchar_t ch, CGGlyph* pGlyphs
 	
     if ( !CTFontGetGlyphsForCharacters( hFont, pUniChars, pGlyphs, 1 ) )
     {
-        char str[2];
-        str[0] = (char)ch;
-        str[1] = 0;
-
-        CFStringRef s = CFStringCreateWithCString(nullptr, str, kTextEncodingUnicodeDefault);
-        pGlyphs[0] = CTFontGetGlyphWithName(hFont, s);
-        CFRelease( s );
-        if ( !pGlyphs[0] )
+        // A UTF-16 encoding cannot be used with a single-byte C string.
+        // Missing glyphs can occur in localized console text; substitute a
+        // printable glyph instead of crashing inside CoreFoundation.
+        const UniChar fallback = '?';
+        if ( !CTFontGetGlyphsForCharacters( hFont, &fallback, pGlyphs, 1 ) )
         {
             return false;
         }
