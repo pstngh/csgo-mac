@@ -62,6 +62,7 @@ private:
 	int m_iScopeDustTexture;
 #if defined( USE_MAC_PRESET )
 	float m_flMohaaScopeAlpha;
+	CUtlVector< vgui::IntRect > m_ScopeMaskRects;
 #endif
 
 	float m_fAnimInset;
@@ -182,7 +183,10 @@ void CHudScope::Paint( void )
 			const float radius = MIN( screenWide, screenTall ) * 0.5f;
 			const float radiusSquared = radius * radius;
 			const int alpha = (int)( m_flMohaaScopeAlpha * 255.0f );
-			vgui::surface()->DrawSetColor( 0, 0, 0, alpha );
+
+			// Mask everything outside the circle in 2-pixel rows, plus the
+			// crosshair lines, in a few batched draws rather than one per row.
+			m_ScopeMaskRects.RemoveAll();
 			for ( int y = 0; y < screenTall; y += 2 )
 			{
 				const int bottom = MIN( y + 2, screenTall );
@@ -190,11 +194,29 @@ void CHudScope::Paint( void )
 				const float halfChord = sqrtf( MAX( 0.0f, radiusSquared - dy * dy ) );
 				const int left = (int)( centerX - halfChord );
 				const int right = (int)( centerX + halfChord );
-				vgui::surface()->DrawFilledRect( 0, y, left, bottom );
-				vgui::surface()->DrawFilledRect( right, y, screenWide, bottom );
+				if ( left > 0 )
+				{
+					const vgui::IntRect leftRect = { 0, y, left, bottom };
+					m_ScopeMaskRects.AddToTail( leftRect );
+				}
+				if ( right < screenWide )
+				{
+					const vgui::IntRect rightRect = { right, y, screenWide, bottom };
+					m_ScopeMaskRects.AddToTail( rightRect );
+				}
 			}
-			vgui::surface()->DrawFilledRect( centerX, 0, centerX + 1, screenTall );
-			vgui::surface()->DrawFilledRect( 0, centerY, screenWide, centerY + 1 );
+			const vgui::IntRect verticalLine = { centerX, 0, centerX + 1, screenTall };
+			const vgui::IntRect horizontalLine = { 0, centerY, screenWide, centerY + 1 };
+			m_ScopeMaskRects.AddToTail( verticalLine );
+			m_ScopeMaskRects.AddToTail( horizontalLine );
+
+			vgui::surface()->DrawSetColor( 0, 0, 0, alpha );
+			const int kMaxRectsPerDraw = 256;
+			for ( int i = 0; i < m_ScopeMaskRects.Count(); i += kMaxRectsPerDraw )
+			{
+				vgui::surface()->DrawFilledRectArray( m_ScopeMaskRects.Base() + i,
+					MIN( kMaxRectsPerDraw, m_ScopeMaskRects.Count() - i ) );
+			}
 		}
 		return;
 	}
