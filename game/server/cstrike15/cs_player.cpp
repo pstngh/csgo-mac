@@ -5078,7 +5078,14 @@ int CCSPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 
 	CEconItemView *pItem = NULL;
 
-	if ( pInflictorWeapon != NULL || ( pGrenade && fDamageToHealth > 0 ) )
+	bool bApplyHitTagging = pInflictorWeapon != NULL || ( pGrenade && fDamageToHealth > 0 );
+#if defined( OSX )
+	// God mode does not stop CS:GO's separate hit-tagging slowdown. Keep the
+	// standalone listen-server host's movement speed when shot or hit.
+	if ( !engine->IsDedicatedServer() && this == UTIL_GetLocalPlayerOrListenServerHost() )
+		bApplyHitTagging = false;
+#endif
+	if ( bApplyHitTagging )
 	{
 		if ( !pGrenade )
 			pItem = pInflictorWeapon->GetEconItemView();

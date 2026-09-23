@@ -113,10 +113,10 @@ static ConVar v_centerspeed( "v_centerspeed","500" );
 static void KeepMacViewmodelFov( IConVar *pVar, const char *, float )
 {
 	ConVarRef var( pVar );
-	if ( V_strcmp( var.GetString(), "90" ) )
-		var.SetValue( 90 );
+	if ( V_strcmp( var.GetString(), "60" ) )
+		var.SetValue( 60 );
 }
-ConVar v_viewmodel_fov( "viewmodel_fov", "90", FCVAR_ARCHIVE, "Locked weapon viewmodel field of view for the standalone Mac build.", KeepMacViewmodelFov );
+ConVar v_viewmodel_fov( "viewmodel_fov", "60", FCVAR_ARCHIVE, "Locked Desktop-preset weapon viewmodel field of view for the standalone Mac build.", KeepMacViewmodelFov );
 #else
 ConVar v_viewmodel_fov( "viewmodel_fov", "54", FCVAR_ARCHIVE );
 #endif

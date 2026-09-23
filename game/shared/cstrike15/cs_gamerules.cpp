@@ -18408,9 +18408,7 @@ ENABLE_COMPETITIVE_CONVAR( cl_interp, 0, 0.031 );			// force cl_interp from 0.01
 ENABLE_COMPETITIVE_CONVAR( cl_updaterate, 10, 150 );		// force cl_updaterate from 10 to 150
 ENABLE_COMPETITIVE_CONVAR( cl_cmdrate, 10, 150 );			// force cl_cmdrate from 10 to 150
 ENABLE_COMPETITIVE_CONVAR( rate, 20480, 786432 );			// force rate above min rate and below max rate
-#if !defined( OSX )
 ENABLE_COMPETITIVE_CONVAR( viewmodel_fov, 54, 68 );			// force viewmodel fov to be between 54 and 68
-#endif
 ENABLE_COMPETITIVE_CONVAR( viewmodel_offset_x, -2, 2.5 );		// restrict viewmodel positioning
 ENABLE_COMPETITIVE_CONVAR( viewmodel_offset_y, -2, 2 );
 ENABLE_COMPETITIVE_CONVAR( viewmodel_offset_z, -2, 2 );
@@ -18558,4 +18556,3 @@ bool CCSGameRules::OnReplayPrompt( CBasePlayer *pVictim, CBasePlayer *pScorer )
 	return CTeamplayRules::OnReplayPrompt( pVictim, pScorer ); // delegate to the base class
 }
 #endif
-

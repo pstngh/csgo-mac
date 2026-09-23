@@ -338,7 +338,13 @@ void CWeaponCSBaseGun::PrimaryAttack()
 		SendWeaponAnim( ACT_VM_PRIMARYATTACK_SILENCED );
 
 	// Does this gun unzoom after a shot, as in a bolt action rifle?
-	if ( IsZoomed() && ( DoesUnzoomAfterShot() ) )
+	bool bUnzoomAfterShot = DoesUnzoomAfterShot();
+#if defined( OSX )
+	// Keep the AWP at its first zoom level until the player unscopes.
+	if ( GetCSWeaponID() == WEAPON_AWP )
+		bUnzoomAfterShot = false;
+#endif
+	if ( IsZoomed() && bUnzoomAfterShot )
 	{
 		pPlayer->m_bIsScoped = false;
 		pPlayer->m_bResumeZoom = true;

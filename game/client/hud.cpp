@@ -213,9 +213,11 @@ bool CHudElement::GetIgnoreGlobalHudDisable( void )
 bool CHudElement::ShouldDraw( void )
 {
 #if defined( OSX ) && defined( CSTRIKE15 )
-	// Keep the in-game presentation crosshair-only. The sniper scope is part
-	// of aiming, and the buy menu is a deliberately opened interaction.
+	// Keep the in-game presentation crosshair-only. Weapon selection must
+	// remain active for invnext/invprev even though its CS:GO paint is empty.
+	// The sniper scope is part of aiming; the buy menu is opened explicitly.
 	if ( V_strcmp( GetName(), "CHudWeapon" ) &&
+		 V_strcmp( GetName(), "CHudWeaponSelection" ) &&
 		 V_strcmp( GetName(), "CHudScope" ) &&
 		 V_strcmp( GetName(), "RkHudBuyMenu" ) )
 		return false;
