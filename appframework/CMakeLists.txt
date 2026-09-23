@@ -31,8 +31,6 @@ if( LINUXALL )
     #Use system SDL2 for linux
     include_directories("/usr/include/SDL2")
     target_compile_options(${OUTLIBNAME} PRIVATE -fpic -fno-semantic-interposition)
-else()
-    include_directories(${SRCDIR}/thirdparty/SDL2)
 endif()
 
 target_sources(${OUTLIBNAME} PRIVATE "${AF_SRCDIR}/AppSystemGroup.cpp")
