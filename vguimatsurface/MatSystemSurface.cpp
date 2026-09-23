@@ -2397,7 +2397,10 @@ bool CMatSystemSurface::AddCustomFontFile( const char *fontFileName )
 	// provides the process-local equivalent and works natively on Apple Silicon.
 	for ( int nAttempt = 0; nAttempt < 2; ++nAttempt )
 	{
-		CGDataProviderRef provider = CGDataProviderCreateWithData( NULL, buf.Base(), buf.TellPut(), NULL );
+		// The registered font keeps reading its data after this function
+		// returns, so give CoreText its own copy instead of buf's memory.
+		CFDataRef data = CFDataCreate( kCFAllocatorDefault, (const UInt8 *)buf.Base(), buf.TellPut() );
+		CGDataProviderRef provider = data ? CGDataProviderCreateWithCFData( data ) : NULL;
 		CGFontRef font = provider ? CGFontCreateWithDataProvider( provider ) : NULL;
 		CFErrorRef error = NULL;
 		bool registered = font && CTFontManagerRegisterGraphicsFont( font, &error );
@@ -2408,6 +2411,8 @@ bool CMatSystemSurface::AddCustomFontFile( const char *fontFileName )
 			CGFontRelease( font );
 		if ( provider )
 			CGDataProviderRelease( provider );
+		if ( data )
+			CFRelease( data );
 
 		if ( registered )
 			return true;
