@@ -135,7 +135,7 @@ CGLMProgram::~CGLMProgram( )
 	GLMShaderDesc *glslDesc = &m_descs[kGLMGLSL];
 	if (glslDesc->m_object.glsl)
 	{
-		gGL->glDeleteShader( (uint)glslDesc->m_object.glsl );	// why do I need a cast here again ?
+		gGL->glDeleteShader( static_cast<GLuint>( reinterpret_cast<uintptr_t>( glslDesc->m_object.glsl ) ) );
 		glslDesc->m_object.glsl = 0;
 	}
 
@@ -786,16 +786,19 @@ void	CGLMProgram::LogSlow( EGLMProgramLang lang )
 {
 	// find the desc, see if it's marked
 	GLMShaderDesc *desc = &m_descs[ lang ];
+	const unsigned long long objectName = ( lang == kGLMGLSL )
+		? static_cast<unsigned long long>( reinterpret_cast<uintptr_t>( desc->m_object.glsl ) )
+		: static_cast<unsigned long long>( desc->m_object.arb );
 
 	if (!desc->m_slowMark)
 	{
 #if !GLM_FREE_SHADER_TEXT
 		// log it
-		printf(	"\n-------------- Slow %s ( CGLMProgram @ %p, lang %s, name %d ) : \n%s \n",
+		printf(	"\n-------------- Slow %s ( CGLMProgram @ %p, lang %s, name %llu ) : \n%s \n",
 				m_type==kGLMVertexProgram ? "VS" : "FS",
 				this,
 				lang==kGLMGLSL ? "GLSL" : "ARB",
-				(int)(lang==kGLMGLSL ? (int)desc->m_object.glsl : (int)desc->m_object.arb),
+				objectName,
 				m_text
 		);
 #endif
@@ -805,11 +808,11 @@ void	CGLMProgram::LogSlow( EGLMProgramLang lang )
 		if ( (desc->m_slowMark & (desc->m_slowMark-1)) == 0 )
 		{
 			// short blurb
-			printf(	"\n               Slow %s ( CGLMProgram @ %p, lang %s, name %d ) (%d times)",
+			printf(	"\n               Slow %s ( CGLMProgram @ %p, lang %s, name %llu ) (%d times)",
 					m_type==kGLMVertexProgram ? "VS" : "FS",
 					this,
 					lang==kGLMGLSL ? "GLSL" : "ARB",
-					(int)(lang==kGLMGLSL ? (int)desc->m_object.glsl : (int)desc->m_object.arb),
+					objectName,
 					desc->m_slowMark+1
 			);
 		}
@@ -965,7 +968,7 @@ bool CGLMShaderPair::ValidateProgramPair()
 
 		if (m_valid)
 		{
-			gGL->glUseProgram( m_program );
+			gGL->glUseProgram( static_cast<GLuint>( reinterpret_cast<uintptr_t>( m_program ) ) );
 
 			m_ctx->NewLinkedProgram();
 
@@ -1547,5 +1550,3 @@ void			CGLMShaderPairCache::DumpStats			( void )
 }
 	
 	//===============================
-
-

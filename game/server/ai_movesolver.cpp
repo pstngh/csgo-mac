@@ -1,4 +1,4 @@
-//========= Copyright � 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose:
 //
@@ -15,7 +15,7 @@
 
 //-----------------------------------------------------------------------------
 
-#if !defined(PS3) && (!defined(_MSC_VER) || _MSC_VER < 1800) && !defined(LINUX64)
+#if !defined(PS3) && (!defined(_MSC_VER) || _MSC_VER < 1800) && !defined(LINUX64) && !defined(OSX)
 // This C99 function exists in VS 2013's math.h and for PS3 but are not currently available elsewhere.
 // lwss - this function exists in linux now.
 inline float round( float f )
@@ -411,4 +411,3 @@ CON_COMMAND(ai_test_move_solver, "Tests the AI move solver system")
 #endif
 
 //=============================================================================
-

@@ -167,7 +167,16 @@ inline ScriptFunctionBindingStorageType_t ScriptConvertFuncPtrToVoid( FUNCPTR_TY
 	typedef FUNCPTR_TYPE FuncPtr_t;
 	size_t funcPtrSize = sizeof( FuncPtr_t ); funcPtrSize;
 
-#if defined(_PS3) || defined(POSIX)
+#if defined(OSX) && defined(__aarch64__)
+	// Under the ARM64 C++ ABI a member-function pointer is two words: the
+	// function/vtable slot plus a this-pointer adjustment.  The legacy POSIX
+	// implementation below assumes the second word is a PowerPC TOC pointer
+	// and deliberately traps when it is non-zero.  Preserve the complete ARM64
+	// representation for the lifetime of the (static) script binding instead.
+	FUNCPTR_TYPE *pStoredFunc = new FUNCPTR_TYPE;
+	*pStoredFunc = pFunc;
+	return reinterpret_cast<ScriptFunctionBindingStorageType_t>( pStoredFunc );
+#elif defined(_PS3) || defined(POSIX)
 	return ScriptConvertFreeFuncPtrToVoid<FUNCPTR_TYPE>( pFunc );
 #else
 
@@ -305,7 +314,9 @@ inline ScriptFunctionBindingStorageType_t ScriptConvertFuncPtrToVoid( FUNCPTR_TY
 template <typename FUNCPTR_TYPE>
 inline FUNCPTR_TYPE ScriptConvertFuncPtrFromVoid( ScriptFunctionBindingStorageType_t p )
 {
-#if defined(_PS3) || defined(POSIX)
+#if defined(OSX) && defined(__aarch64__)
+	return *reinterpret_cast<FUNCPTR_TYPE *>( p );
+#elif defined(_PS3) || defined(POSIX)
 	return ScriptConvertFreeFuncPtrFromVoid<FUNCPTR_TYPE>( p );
 #else
 

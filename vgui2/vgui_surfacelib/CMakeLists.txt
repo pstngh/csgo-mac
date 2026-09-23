@@ -30,7 +30,9 @@ target_sources(${OUTLIBNAME} PRIVATE "texturedictionary.cpp")
 #$File	"Win32Font.cpp"			[$WINDOWS]
 #$File	"Win32Font_x360.cpp"	[$X360]
 #$File	"ps3font.cpp"			[$PS3]
-#$File	"osxfont.cpp"			[$OSXALL]
+if( OSXALL )
+    target_sources(${OUTLIBNAME} PRIVATE "osxfont.cpp")
+endif()
 if( LINUXALL )
     target_sources(${OUTLIBNAME} PRIVATE "linuxfont.cpp")
 endif()

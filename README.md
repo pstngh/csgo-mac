@@ -1,4 +1,11 @@
-# Kisak-Strike
+# csgo-mac
+
+Native Apple Silicon support for [Kisak-Strike](https://github.com/SwagSoftware/Kisak-Strike), the open-source CS:GO engine port.
+
+The macOS build runs as arm64 code without Rosetta. It can start without the Steam desktop client and supports insecure offline/LAN play. Steam matchmaking, VAC, inventory, achievements, and other online Steam services are not available in standalone mode.
+
+See [MACOS.md](MACOS.md) for the Apple Silicon build and launch instructions. Original game assets are not included in this repository.
+
 Kisak-Strike: Gentoo Offensive(KSGO) is a CSGO port aimed towards Linux enthusiasts. 
 
 It can be built 100% Open-Source with optional Closed-source components.
@@ -126,4 +133,3 @@ copyright notice and the following:
        
 If you would like to use the SDK for a commercial purpose, please contact Valve at 
 sourceengine@valvesoftware.com.
-

@@ -236,7 +236,12 @@ void CTextWindow::ShowURL( const char *URL, bool bAllowUserToDisable )
 	CFmtStr fmtReplacement;
 
 	fmtPattern.Clear();			fmtPattern.AppendFormat( "%s", "%steamid%" );
-	fmtReplacement.Clear();		fmtReplacement.AppendFormat( "%llu", steamapicontext->SteamUser()->GetSteamID().ConvertToUint64() );
+	uint64 ullSteamID = 0;
+	if ( steamapicontext && steamapicontext->SteamUser() )
+	{
+		ullSteamID = steamapicontext->SteamUser()->GetSteamID().ConvertToUint64();
+	}
+	fmtReplacement.Clear();		fmtReplacement.AppendFormat( "%llu", ullSteamID );
 	while ( char *pszReplace = strstr( chUrlBufferAfterPatternReplacements, fmtPattern.Access() ) )
 	{
 		size_t numBytes = Q_strlen( pszReplace + fmtPattern.Length() );

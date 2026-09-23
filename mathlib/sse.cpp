@@ -185,6 +185,12 @@ float FASTCALL _SSE_VectorNormalize (Vector& vec)
 		r[0] = v[0] * rsqrt;
 		r[1] = v[1] * rsqrt;
 		r[2] = v[2] * rsqrt;
+#elif defined( __aarch64__ )
+		radius = sqrtf( v[0] * v[0] + v[1] * v[1] + v[2] * v[2] );
+		const float reciprocalRadius = 1.0f / radius;
+		r[0] = v[0] * reciprocalRadius;
+		r[1] = v[1] * reciprocalRadius;
+		r[2] = v[2] * reciprocalRadius;
 #elif POSIX
 		__asm__ __volatile__(
 #ifdef ALIGNED_VECTOR
@@ -502,7 +508,7 @@ float FastCos( float x )
 		movss   x,    xmm0
 		
 	}
-#elif defined( _WIN64 ) || defined( __e2k__ )
+#elif defined( _WIN64 ) || defined( __e2k__ ) || defined( __aarch64__ )
 	return cosf( x );
 #elif POSIX
 	
@@ -808,4 +814,3 @@ vec_t DotProduct (const vec_t *a, const vec_t *c)
 	}
 }
 */
-

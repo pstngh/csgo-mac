@@ -1244,7 +1244,9 @@ inline void CVertexBuilder::FastVertex( const ModelVertexDX8_t &vertex )
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
 	Assert( m_nCurrentVertex < m_nMaxVertexCount );
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined( _M_X64 )
+#if defined( __aarch64__ )
+	memcpy( m_pCurrPosition, &vertex, sizeof( vertex ) );
+#elif defined( _WIN32 ) && !defined( _X360 ) && !defined( _M_X64 )
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
 	__asm
@@ -1308,7 +1310,9 @@ inline void CVertexBuilder::FastVertexSSE( const ModelVertexDX8_t &vertex )
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
 	Assert( m_nCurrentVertex < m_nMaxVertexCount );
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined( _M_X64 )
+#if defined( __aarch64__ )
+	memcpy( m_pCurrPosition, &vertex, sizeof( vertex ) );
+#elif defined( _WIN32 ) && !defined( _X360 ) && !defined( _M_X64 )
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
 	__asm
@@ -1356,7 +1360,9 @@ inline void CVertexBuilder::FastQuadVertexSSE( const QuadTessVertex_t &vertex )
 	Assert( m_CompressionType == VERTEX_COMPRESSION_NONE ); // FIXME: support compressed verts if needed
 	Assert( m_nCurrentVertex < m_nMaxVertexCount );
 
-#if defined( _WIN32 ) && !defined( _X360 ) && !defined( _M_X64 )
+#if defined( __aarch64__ )
+	memcpy( m_pCurrPosition, &vertex, sizeof( vertex ) );
+#elif defined( _WIN32 ) && !defined( _X360 ) && !defined( _M_X64 )
 	const void *pRead = &vertex;
 	void *pCurrPos = m_pCurrPosition;
 	__asm

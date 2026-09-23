@@ -13,6 +13,14 @@ set(LIBPUBLIC "${SRCDIR}/lib/public${PLATSUBDIR}") #this is where static libs ar
 #link_directories(${LIBPUBLIC}) #add to search path for linker - lwss: use the project name instead of linking the files manually.
 set(LIBCOMMON "${SRCDIR}/lib/common${PLATSUBDIR}")
 set(DEVTOOLS "${SRCDIR}/devtools")
+if(OSXALL)
+    set(STEAM_API_LIBRARY "" CACHE FILEPATH "Path to an arm64-capable libsteam_api.dylib")
+    if(NOT EXISTS "${STEAM_API_LIBRARY}")
+        message(FATAL_ERROR "Set STEAM_API_LIBRARY to an arm64-capable libsteam_api.dylib from your Steam installation")
+    endif()
+else()
+    set(STEAM_API_LIBRARY "${LIBPUBLIC}/libsteam_api${CMAKE_SHARED_LIBRARY_SUFFIX}")
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -64,6 +72,10 @@ if(DEDICATED)
 endif()
 if(OSXALL)
     add_definitions(-D_OSX -DOSX -D_DARWIN_UNLIMITED_SELECT -DFD_SETSIZE=10240)
+    # Darwin keeps iconv in a separate system library; tier1's conversion
+    # helpers are pulled into several shared modules.
+    find_library(ICONV_LIBRARY iconv REQUIRED)
+    link_libraries("${ICONV_LIBRARY}")
 endif()
 
 if(LINUXALL)
@@ -88,17 +100,12 @@ if(POSIX)
 endif()
 if(OSX64)
     add_definitions(-DPLATFORM_64BITS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -arch x86_64")
 endif()
 
 if(NOT IS_LIB_PROJECT)
     #set(ConfigurationType "Application (.exe)") #not used
 
     #$Linker
-    if(OSX64)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -arch x86_64")
-    endif()
-
     #$Folder	"Link Libraries"
     if( NOSTINKYLINKIES )
         message(STATUS "skipping stinky linkie")

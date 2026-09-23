@@ -42,8 +42,12 @@ if( GL )
     if( OSXALL )
         #source
         target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/glmgrcocoa.mm")
-        target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/intelglmallocworkaround.cpp")
-        target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/mach_override.c")
+        if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+            # Workaround for an Intel HD4000 driver bug in macOS 10.8. The
+            # function-hook implementation contains x86 machine code.
+            target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/intelglmallocworkaround.cpp")
+            target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/mach_override.c")
+        endif()
     endif()
     target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/cglmtex.cpp")
     target_sources(${OUTBINNAME} PRIVATE "${TOGL_SRCDIR}/cglmfbo.cpp")
@@ -60,3 +64,19 @@ endif()
 #//-----------------------------------------------------------------------------
 
 target_link_libraries(${OUTBINNAME} tier2_client libvstdlib_client mathlib_client )
+
+if(APPLE)
+    # TOGL owns the native NSOpenGL/CGL context and Objective-C Cocoa glue.
+    # These dependencies were listed as VPC "SystemFrameworks" in Valve's
+    # original macOS project but were absent from the CMake conversion.
+    find_library(TOGL_OPENGL_FRAMEWORK OpenGL REQUIRED)
+    find_library(TOGL_COCOA_FRAMEWORK Cocoa REQUIRED)
+    find_library(TOGL_IOKIT_FRAMEWORK IOKit REQUIRED)
+    find_library(TOGL_CARBON_FRAMEWORK Carbon REQUIRED)
+    target_link_libraries(${OUTBINNAME}
+        "${TOGL_OPENGL_FRAMEWORK}"
+        "${TOGL_COCOA_FRAMEWORK}"
+        "${TOGL_IOKIT_FRAMEWORK}"
+        "${TOGL_CARBON_FRAMEWORK}"
+    )
+endif()

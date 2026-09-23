@@ -16,6 +16,7 @@
 #endif
 #ifdef OSX
 #include <Carbon/Carbon.h>
+#include <CoreText/CoreText.h>
 #endif
 #ifdef LINUX
 #include <fontconfig/fontconfig.h>
@@ -2391,45 +2392,32 @@ bool CMatSystemSurface::AddCustomFontFile( const char *fontFileName )
 		Msg( "Failed to load custom font file '%s'\n", fontFileName );
 		return false;
 	}
-	
-  OSStatus err;
-	ATSFontContainerRef container;
-  err = ATSFontActivateFromMemory( buf.Base(), buf.TellPut(), kATSFontContextLocal, kATSFontFormatUnspecified, NULL, kATSOptionFlagsDefault, &container );
-  if ( err != noErr && ValveFont::DecodeFont( buf ) )
+
+	// ATSFontActivateFromMemory was removed from current macOS SDKs.  CoreText
+	// provides the process-local equivalent and works natively on Apple Silicon.
+	for ( int nAttempt = 0; nAttempt < 2; ++nAttempt )
 	{
-    err = ATSFontActivateFromMemory( buf.Base(), buf.TellPut(), kATSFontContextLocal, kATSFontFormatUnspecified, NULL, kATSOptionFlagsDefault, &container );
-  }
-	
-#if 0
-  if ( err == noErr )
-  {
-	 // Debug code to let you find out the name of a font we pull in from a memory buffer
-	 // Count the number of fonts that were loaded.
-	 ItemCount fontCount = 0;
-	 err = ATSFontFindFromContainer(container, kATSOptionFlagsDefault, 0,
-	 NULL, &fontCount);
-	 
-	 if (err != noErr || fontCount < 1) {
-	 return false;
-	 }
-	 
-	 // Load font from container.
-	 ATSFontRef font_ref_ats = 0;
-	 ATSFontFindFromContainer(container, kATSOptionFlagsDefault, 1,
-	 &font_ref_ats, NULL);
-	 
-	 if (!font_ref_ats) {
-	 return false;
-	 }
-	 
-	 CFStringRef name;
-	 ATSFontGetPostScriptName( font_ref_ats, kATSOptionFlagsDefault, &name );
-	 
-	 const char *font_name = CFStringGetCStringPtr( name, CFStringGetSystemEncoding());
-   printf( "loaded %s\n", font_name );
-  }
-#endif
-	return err == noErr;
+		CGDataProviderRef provider = CGDataProviderCreateWithData( NULL, buf.Base(), buf.TellPut(), NULL );
+		CGFontRef font = provider ? CGFontCreateWithDataProvider( provider ) : NULL;
+		CFErrorRef error = NULL;
+		bool registered = font && CTFontManagerRegisterGraphicsFont( font, &error );
+
+		if ( error )
+			CFRelease( error );
+		if ( font )
+			CGFontRelease( font );
+		if ( provider )
+			CGDataProviderRelease( provider );
+
+		if ( registered )
+			return true;
+
+		if ( nAttempt != 0 || !ValveFont::DecodeFont( buf ) )
+			break;
+	}
+
+	Msg( "Failed to register custom font file '%s'\n", fontFileName );
+	return false;
 #elif defined(LINUX)
 	// Just load the font data, decrypt in memory and register for this process
 	CUtlBuffer buf;

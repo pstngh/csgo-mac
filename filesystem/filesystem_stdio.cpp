@@ -363,13 +363,9 @@ static bool ThreadInIoThread()
 
 #endif //_PS3
 
-#if __DARWIN_64_BIT_INO_T
-#error badness
-#endif
-
-#if _DARWIN_FEATURE_64_BIT_INODE
-#error additional badness
-#endif
+// Modern macOS always uses 64-bit inode types.  The filesystem implementation
+// below only relies on the public POSIX interfaces, so the old SDK tripwires
+// are no longer relevant (and reject every current Apple SDK).
 //-----------------------------------------------------------------------------
 
 class CFileSystem_Stdio : public CBaseFileSystem
@@ -2122,4 +2118,3 @@ char *CFiosReadOnlyFile::FS_fgets( char *dest, int destSize )
 
 
 #endif
-

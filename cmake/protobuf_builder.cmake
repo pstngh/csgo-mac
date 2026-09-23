@@ -18,8 +18,10 @@ add_definitions(-DPROTOBUF)
 #    message(FATAL_ERROR "Platform Unknown!")
 #endif()
 
-#This is a target added in /thirdparty/protobuf-2.x
-set(PROTO_COMPILER "protoc")
+# This is a target added in /thirdparty/protobuf-2.x. Use its generated full
+# path: GUI generators happened to find `protoc` by name, but a clean Ninja
+# build on macOS does not put the build directory on PATH.
+set(PROTO_COMPILER "$<TARGET_FILE:protoc>")
 
 #Built a .proto file and add the resulting C++ to the target.
 macro( TargetBuildAndAddProto TARGET_NAME PROTO_FILE PROTO_OUTPUT_FOLDER )
@@ -31,7 +33,7 @@ macro( TargetBuildAndAddProto TARGET_NAME PROTO_FILE PROTO_OUTPUT_FOLDER )
                    "${PROTO_OUTPUT_FOLDER}/${PROTO_FILENAME}.pb.h"
             COMMAND ${PROTO_COMPILER}
             ARGS --cpp_out=. --proto_path=${SRCDIR}/game/shared/cstrike15 --proto_path=${SRCDIR}/thirdparty/protobuf-2.5.0/src --proto_path=${SRCDIR}/gcsdk --proto_path=${SRCDIR}/game/shared --proto_path=${SRCDIR}/common ${PROTO_FILE}
-            DEPENDS ${PROTO_FILE} ${PROTO_COMPILER}
+            DEPENDS ${PROTO_FILE} protoc
             WORKING_DIRECTORY ${PROTO_OUTPUT_FOLDER}
             COMMENT "Running homemade protoc compiler on ${PROTO_FILE} - output (${PROTO_OUTPUT_FOLDER}/${PROTO_FILENAME}.pb.cc)"
             VERBATIM

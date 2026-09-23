@@ -487,13 +487,13 @@ class CDmaArray : public CDmaDecorator< T, CDmaArrayBase< T, CDmaDataInternal< C
 public:
 	const CDmaArray<T>& operator=( const CDmaArray<T> &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
 	template< class C > const CDmaArray<T>& operator=( const C &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
@@ -519,13 +519,13 @@ class CDmrArray : public CDmrDecorator< T, CDmaArrayBase< T, CDmaDataExternal< C
 public:
 	const CDmrArray<T>& operator=( const CDmrArray<T> &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
 	template< class C > const CDmrArray<T>& operator=( const C &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 };
@@ -539,13 +539,13 @@ class CDmaStringArray : public CDmaDecorator< CUtlSymbolLarge, CDmaStringArrayBa
 public:
 	const CDmaStringArray& operator=( const CDmaStringArray &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
 	template< class C > const CDmaStringArray& operator=( const C &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
@@ -564,13 +564,13 @@ public:
 
 	const CDmrStringArray& operator=( const CDmrStringArray &val ) 
 	{ 
-		this->CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
 	template< class C > const CDmrStringArray& operator=( const C &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 };
@@ -614,14 +614,14 @@ public:
 
 	template< typename C > CDmaElementArray<E>& operator=( const C &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
 	// NOTE: The copy operator= must be defined in addition to the generic one
 	const CDmaElementArray<E>& operator=( const CDmaElementArray<E> &val ) 
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
@@ -770,14 +770,14 @@ public:
 
 	template< typename C > CDmrElementArray<T>& operator=( const C &val )
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 
 	// NOTE: The copy operator= must be defined in addition to the generic one
 	const CDmrElementArray<T>& operator=( const CDmrElementArray<T> &val )
 	{ 
-		CopyArray( val.Base(), val.Count() ); 
+		this->CopyArray( val.Base(), val.Count() );
 		return *this; 
 	}
 };
@@ -1189,7 +1189,7 @@ inline void CDmaElement<T>::Init( CDmElement *pOwner, const char *pAttributeName
 template <class T>
 inline CUtlSymbolLarge CDmaElement<T>::GetElementType() const
 {
-	return this->Data().m_ElementType;
+	return this->Storage().m_ElementType;
 }
 
 template <class T>

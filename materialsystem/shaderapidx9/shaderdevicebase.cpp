@@ -38,7 +38,7 @@ CShaderDeviceBase *g_pShaderDevice;
 CShaderAPIBase *g_pShaderAPI;
 CShaderDeviceMgrBase *g_pShaderDeviceMgr;
 IShaderShadow *g_pShaderShadow;
-#if !defined( _PS3 ) && !defined( _OSX )
+#if !defined( _PS3 )
 IShaderUtil* g_pShaderUtil;		// The main shader utility interface
 IVJobs * g_pVJobs;
 #else
@@ -151,7 +151,7 @@ bool CShaderDeviceMgrBase::Connect( CreateInterfaceFn factory )
 	ConnectTier1Libraries( &actualFactory, 1 );
 	InitShaderAPICVars();
 	ConnectTier2Libraries( &actualFactory, 1 );
-#if !defined( _PS3 ) && !defined( _OSX )
+#if !defined( _PS3 )
 	if ( !g_pShaderUtil )
 		g_pShaderUtil = (IShaderUtil*)ShaderDeviceFactory( SHADER_UTIL_INTERFACE_VERSION, NULL );
 #endif
@@ -177,7 +177,7 @@ void CShaderDeviceMgrBase::Disconnect()
 {
 	LOCK_SHADERAPI();
 
-#if !defined( _PS3 ) && !defined( _OSX )
+#if !defined( _PS3 )
 	g_pShaderDeviceMgr = NULL;
 	g_pShaderUtil = NULL;
 #endif
@@ -1231,5 +1231,4 @@ void CShaderDeviceBase::GetWindowSize( int& nWidth, int& nHeight ) const
 
 #endif
 }
-
 

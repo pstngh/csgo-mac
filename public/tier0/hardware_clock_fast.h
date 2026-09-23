@@ -4,7 +4,13 @@
 
 #include "tier0/platform.h"
 
-#if defined GNUC && !defined __e2k__
+#if defined( __aarch64__ )
+inline int GetHardwareClockFast( void )
+{
+	return ( int )Plat_Rdtsc();
+}
+
+#elif defined GNUC && !defined __e2k__
 inline int GetHardwareClockFast( void )
 {
 	unsigned long long int nRet;

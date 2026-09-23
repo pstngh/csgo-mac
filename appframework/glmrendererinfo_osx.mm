@@ -206,7 +206,7 @@ GLMRendererInfo::GLMRendererInfo( GLMRendererInfoFields *info )
 		kCGLPFADoubleBuffer, kCGLPFANoRecovery, kCGLPFAAccelerated,
 		kCGLPFADepthSize, 0,
 		kCGLPFAColorSize, 32,
-		kCGLPFARendererID, info->m_rendererID,
+		kCGLPFARendererID, static_cast<unsigned int>( info->m_rendererID ),
 		0
 	};
 

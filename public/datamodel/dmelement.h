@@ -33,6 +33,12 @@ class Quaternion;
 class VMatrix;
 class CDmElement;
 
+// Declare the template (and its default) before CDmElement's friend
+// declaration.  Current Clang correctly rejects adding a default argument at
+// the later definition after the friend has already declared the template.
+template< class T >
+void CopyElements( const CUtlVector< T* > &from, CUtlVector< T* > &to, TraversalDepth_t depth = TD_DEEP );
+
 
 //-----------------------------------------------------------------------------
 // Suppress some SWIG warnings, only for SWIG.  Here because many SWIG
@@ -1039,7 +1045,7 @@ int DmeEstimateMemorySize( T* pElement )
 // copy groups of elements together so that references between them are maintained
 //-----------------------------------------------------------------------------
 template< class T >
-void CopyElements( const CUtlVector< T* > &from, CUtlVector< T* > &to, TraversalDepth_t depth = TD_DEEP )
+void CopyElements( const CUtlVector< T* > &from, CUtlVector< T* > &to, TraversalDepth_t depth )
 {
 	CDisableUndoScopeGuard sg;
 

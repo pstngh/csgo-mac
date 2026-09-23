@@ -6323,9 +6323,9 @@ class CMsgGCCStrike15_v2_MatchmakingServerRoundStats : public ::google::protobuf
   ::std::string* map_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > kills_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > assists_;
-  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > deaths_;
   ::google::protobuf::int32 round_;
   ::google::protobuf::int32 round_result_;
+  ::google::protobuf::RepeatedField< ::google::protobuf::int32 > deaths_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > scores_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > pings_;
   ::google::protobuf::RepeatedField< ::google::protobuf::int32 > team_scores_;

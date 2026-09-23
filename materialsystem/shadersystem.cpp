@@ -29,7 +29,7 @@
 // NOTE: This must be the last file included!
 #include "tier0/memdbgon.h"
 
-#if defined( _PS3 ) || defined( _OSX )
+#if defined( _PS3 )
 #define g_pShaderAPI ShaderAPI()
 #define ShaderApiParam( x ) g_pShaderAPIDX8
 #else
@@ -417,7 +417,7 @@ bool CShaderSystem::LoadShaderDLL( const char *pFullPath )
 //-----------------------------------------------------------------------------
 bool CShaderSystem::LoadShaderDLL( const char *pFullPath, const char *pPathID, bool bModShaderDLL )
 {
-#if !defined( _PS3 ) && !defined( _OSX )
+#if !defined( _PS3 )
 	if ( !pFullPath && !pFullPath[0] )
 		return true;
 
@@ -458,7 +458,7 @@ bool CShaderSystem::LoadShaderDLL( const char *pFullPath, const char *pPathID, b
 	IShaderDLLInternal *pShaderDLL = GetShaderDLLInternal();
 	pShaderDLL->Connect( Sys_GetFactoryThis(), false );
 
-#endif // !_PS3 && !_OSX
+#endif // !_PS3
 
 	// FIXME: We need to do some sort of shader validation here for anticheat.
 
@@ -1876,4 +1876,3 @@ void CShaderSystem::AddShaderComboInformation( const ShaderComboSemantics_t *pSe
 #ifdef _PS3
 #include "shadersystem_ps3nonvirt.inl"
 #endif
-

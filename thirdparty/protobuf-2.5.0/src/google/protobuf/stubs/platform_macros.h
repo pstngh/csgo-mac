@@ -40,6 +40,9 @@
 #if defined(_M_X64) || defined(__x86_64__)
 #define GOOGLE_PROTOBUF_ARCH_X64 1
 #define GOOGLE_PROTOBUF_ARCH_64_BIT 1
+#elif defined(_M_ARM64) || defined(__aarch64__)
+#define GOOGLE_PROTOBUF_ARCH_ARM64 1
+#define GOOGLE_PROTOBUF_ARCH_64_BIT 1
 #elif defined(_M_IX86) || defined(__i386__)
 #define GOOGLE_PROTOBUF_ARCH_IA32 1
 #define GOOGLE_PROTOBUF_ARCH_32_BIT 1

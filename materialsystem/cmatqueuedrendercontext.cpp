@@ -23,7 +23,7 @@
 
 ConVar mat_report_queue_status( "mat_report_queue_status", "0", FCVAR_MATERIAL_SYSTEM_THREAD );
 
-#if defined( _PS3 ) || defined( _OSX )
+#if defined( _PS3 )
 #define g_pShaderAPI ShaderAPI()
 #endif
 
@@ -2499,4 +2499,3 @@ void CMatQueuedRenderContext::ReadPixelsAndStretch( Rect_t *pSrcRect, Rect_t *pD
 	g_pShaderAPI->ReadPixels( pSrcRect, pDstRect, pBuffer, dstFormat, nDstStride );
 	m_pMaterialSystem->Unlock( hLock );
 }
-

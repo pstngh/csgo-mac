@@ -450,7 +450,7 @@ if( (NOT DEFINED NO_STEAM) )
     #grug
     #Looks like we have to include libsteam_api
     message("building with steam_api")
-    target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so)
+    target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY})
 else()
     #message(FATAL_ERROR "CMake steam_api integration is disabled.")
     message(FATAL_ERROR "We have to build with steam currently =(")
@@ -487,6 +487,38 @@ if( LINUXALL AND NOT DEDICATED )
     target_link_libraries(${OUTBINNAME} curl ssl z crypto)
 endif()
 target_link_libraries(${OUTBINNAME} quickhull_client)
+if( APPLE AND NOT DEDICATED )
+    # Native macOS engine services formerly supplied by VPC's
+    # SystemFrameworks/implicit-library settings.
+    find_library(ENGINE_AUDIOTOOLBOX_FRAMEWORK AudioToolbox REQUIRED)
+    find_library(ENGINE_COREAUDIO_FRAMEWORK CoreAudio REQUIRED)
+    find_library(ENGINE_AUDIOUNIT_FRAMEWORK AudioUnit REQUIRED)
+    find_library(ENGINE_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+    find_library(ENGINE_CFNETWORK_FRAMEWORK CFNetwork REQUIRED)
+    find_library(ENGINE_SYSTEMCONFIGURATION_FRAMEWORK SystemConfiguration REQUIRED)
+    find_library(ENGINE_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+    find_library(ENGINE_CORESERVICES_FRAMEWORK CoreServices REQUIRED)
+    find_library(ENGINE_OPENAL_FRAMEWORK OpenAL REQUIRED)
+    find_library(ENGINE_SDL2_LIBRARY SDL2
+        PATHS /opt/homebrew/opt/sdl2/lib
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    find_library(ENGINE_CURL_LIBRARY curl REQUIRED)
+    target_link_libraries(${OUTBINNAME}
+        "${ENGINE_AUDIOTOOLBOX_FRAMEWORK}"
+        "${ENGINE_COREAUDIO_FRAMEWORK}"
+        "${ENGINE_AUDIOUNIT_FRAMEWORK}"
+        "${ENGINE_COREFOUNDATION_FRAMEWORK}"
+        "${ENGINE_CFNETWORK_FRAMEWORK}"
+        "${ENGINE_SYSTEMCONFIGURATION_FRAMEWORK}"
+        "${ENGINE_COREGRAPHICS_FRAMEWORK}"
+        "${ENGINE_CORESERVICES_FRAMEWORK}"
+        "${ENGINE_OPENAL_FRAMEWORK}"
+        "${ENGINE_SDL2_LIBRARY}"
+        "${ENGINE_CURL_LIBRARY}"
+    )
+endif()
 if( SDL AND NOT LINUXALL )
     #$ImpLib	"SDL2" [$SDL && !$LINUXALL]
 endif()

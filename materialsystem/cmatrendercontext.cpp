@@ -986,7 +986,7 @@ Vector CMatRenderContextBase::GetToneMappingScaleLinear( void )
 }
 
 #undef g_pShaderAPI
-#if defined( _PS3 ) || defined( _OSX )
+#if defined( _PS3 )
 #define g_pShaderAPI ShaderAPI()
 #endif
 
@@ -3451,5 +3451,4 @@ float	CMatRenderContext::Knob( char *knobname, float *setvalue )
 		return 0.0f;
 	#endif
 }
-
 

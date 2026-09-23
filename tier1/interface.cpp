@@ -448,10 +448,22 @@ CSysModule *Sys_LoadModule( const char *pModuleName )
 			// don't make bin/bin path
 			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/%s", szCwd, pModuleName );
 		}
+		#if defined( OSX ) && defined( PLATFORM_64BITS )
+		else if ( cCwd >= 10 && !Q_stricmp( szCwd + cCwd - 10, "/bin/osx64" ) )
+		{
+			// Already running from the platform library directory.
+			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/%s", szCwd, pModuleName );
+		}
+		else
+		{
+			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/osx64/%s", szCwd, pModuleName );
+		}
+		#else
 		else
 		{
 			Q_snprintf( szAbsoluteModuleName, sizeof(szAbsoluteModuleName), "%s/bin/%s", szCwd, pModuleName );
 		}
+		#endif
 		hDLL = Sys_LoadLibrary( szAbsoluteModuleName );
 #endif // _PS3
 	}

@@ -1438,12 +1438,7 @@ int CHLClient::Connect( CreateInterfaceFn appSystemFactory, CGlobalVarsBase *pGl
 		!ClientSteamContext().SteamUser()->GetSteamID().IsValid()	// << this is catching the case when Steam client is running, but showing logon username/password screen
 		)
 	{
-		fprintf( stderr, "FATAL ERROR: This game requires latest version of Steam to be running!\nYour Steam Client can be updated using Steam > Check for Steam Client Updates...\n" );
-#if IS_WINDOWS_PC || ( defined ( LINUX ) && !defined ( DEDICATED ) )
-		Error( "FATAL ERROR: Failed to connect with local Steam Client process!\n\nPlease make sure that you are running latest version of Steam Client.\nYou can check for Steam Client updates using Steam main menu:\n             Steam > Check for Steam Client Updates..." );
-#endif
-		Plat_ExitProcess( 100 );
-		return false;
+		Warning( "Steam client services unavailable; continuing in standalone insecure mode.\n" );
 	}
 
 #endif
@@ -4975,4 +4970,3 @@ class CClientMaterialSystem : public IClientMaterialSystem
 static CClientMaterialSystem s_ClientMaterialSystem;
 IClientMaterialSystem *g_pClientMaterialSystem = &s_ClientMaterialSystem;
 EXPOSE_SINGLE_INTERFACE_GLOBALVAR( CClientMaterialSystem, IClientMaterialSystem, VCLIENTMATERIALSYSTEM_INTERFACE_VERSION, s_ClientMaterialSystem );
-

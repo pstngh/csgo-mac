@@ -532,7 +532,7 @@ void inline SinCos( float radians, float * RESTRICT sine, float * RESTRICT cosin
 		fstp DWORD PTR [edx]
 		fstp DWORD PTR [eax]
 	}
-#elif defined( GNUC ) && !defined( __e2k__ )
+#elif defined( GNUC ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
     //lwss - remove 'register' keyword
 	//register double __cosr, __sinr;
 	double __cosr, __sinr;
@@ -1682,10 +1682,12 @@ FORCEINLINE int RoundFloatToInt(float f)
 		fld f
 		fistp nResult
 	}
-#elif defined( GNUC ) && !defined( __e2k__ )
+#elif defined( GNUC ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 	__asm __volatile__ (
 		"fistpl %0;": "=m" (nResult): "t" (f) : "st"
 	);
+#elif defined( __aarch64__ )
+	nResult = static_cast<int>( lrintf( f ) );
 #else
 	nResult = static_cast<int>(f);
 #endif
@@ -1729,10 +1731,12 @@ FORCEINLINE unsigned char RoundFloatToByte(float f)
 		fld f
 		fistp nResult
 	}
-#elif defined( GNUC ) && !defined( __e2k__ )
+#elif defined( GNUC ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 	__asm __volatile__ (
 		"fistpl %0;": "=m" (nResult): "t" (f) : "st"
 	);
+#elif defined( __aarch64__ )
+	nResult = static_cast<int>( lrintf( f ) );
 #else
 	nResult = static_cast<unsigned int> (f) & 0xff;
 #endif
@@ -1776,12 +1780,14 @@ FORCEINLINE unsigned long RoundFloatToUnsignedLong(float f)
 		fistp       qword ptr nResult
 	}
 	return *((unsigned long*)nResult);
-#elif defined( COMPILER_GCC ) && !defined( __e2k__ )
+#elif defined( COMPILER_GCC ) && ( defined( __i386__ ) || defined( __x86_64__ ) )
 	unsigned char nResult[8];
 	__asm __volatile__ (
 		"fistpl %0;": "=m" (nResult): "t" (f) : "st"
 	);
 	return *((unsigned long*)nResult);
+#elif defined( __aarch64__ )
+	return static_cast<unsigned long>( llrintf( f ) );
 #else
 	return static_cast<unsigned long>(f);
 #endif
@@ -3132,4 +3138,3 @@ void BuildTransformedBox( Vector *v2, Vector const &bbmin, Vector const &bbmax, 
 
 
 #endif	// MATH_BASE_H
-

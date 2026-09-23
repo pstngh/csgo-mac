@@ -97,6 +97,14 @@ public:
 	virtual bool BShouldDeleteByCache() const { return true; }
 	virtual CUtlString GetDebugString() const { return PchClassName( GetTypeID() ); };
 
+#ifndef GC
+	// Client code also serializes shared objects.  The legacy header hid these
+	// base declarations behind GC even though client implementations override
+	// and invoke them.
+	virtual bool BAddToMessage( std::string *pBuffer ) const { return false; }
+	virtual bool BAddDestroyToMessage( std::string *pBuffer ) const { return false; }
+#endif
+
 	bool BIsKeyEqual( const CSharedObject & soRHS ) const;
 
 	static void RegisterFactory( int nTypeID, SOCreationFunc_t fnFactory, uint32 unFlags, const char *pchClassName, const char* pszBuildCacheName, const char* pszCreateName, const char* pszUpdateName );

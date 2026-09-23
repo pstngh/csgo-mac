@@ -22,6 +22,23 @@ project(KisakStrike)
 
 include(kisak-strike-build-options.cmake)
 
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    include_directories(BEFORE "${CMAKE_SOURCE_DIR}/thirdparty/macos_compat")
+    include_directories(BEFORE "${CMAKE_SOURCE_DIR}/thirdparty/sse2neon")
+    # The 2017 codebase intentionally initializes signed SIMD masks with
+    # hexadecimal bit patterns outside INT_MAX. Modern Clang diagnoses those
+    # pre-C++11 initializers as errors even though the resulting bits are exact.
+    add_compile_options(-Wno-c++11-narrowing)
+    add_compile_definitions(
+        PLATFORM_ARM64=1
+        ARM64=1
+        X64BITS=1
+        SSE2NEON_PRECISE_MINMAX=1
+        SSE2NEON_PRECISE_SQRT=1
+        SSE2NEON_PRECISE_DIV=1
+    )
+endif()
+
 add_subdirectory(appframework)
 add_subdirectory(external/crypto++-5.61)
 add_subdirectory(interfaces)
@@ -40,7 +57,10 @@ add_subdirectory(vgui2/vgui_controls)
 add_subdirectory(vgui2/vgui_surfacelib)
 add_subdirectory(soundsystem/lowlevel)
 add_subdirectory(thirdparty/quickhull)
-if(CMAKE_SYSTEM_PROCESSOR STREQUAL "e2k")
+if(APPLE)
+    # tcmalloc is only linked by the Linux launchers. Its bundled autotools
+    # source does not configure on current macOS SDKs.
+elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "e2k")
     # We use sustem gperftools-2.5 on OS Elbrus
 else()
     add_subdirectory(thirdparty/gperftools-2.8.1) #We include this version instead of distro-pkg because there is a false positive in ASAN
@@ -90,6 +110,20 @@ add_subdirectory(matchmaking) #Does all 4 matchmaking projects
 
 add_subdirectory(launcher)
 add_subdirectory(launcher_main) #The actual executable that just dlopen's launcher
+
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    # The Steam API library is supplied by the local Steam installation at
+    # configure time. Modules in both directories load it beside themselves;
+    # keep the proprietary binary out of the source repository.
+    set(MACOS_GAME_BIN "${CMAKE_SOURCE_DIR}/../game/bin/osx64")
+    set(MACOS_CSGO_BIN "${CMAKE_SOURCE_DIR}/../game/csgo/bin/osx64")
+    add_custom_target(macos_steam_api_runtime ALL
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${MACOS_GAME_BIN}" "${MACOS_CSGO_BIN}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${STEAM_API_LIBRARY}" "${MACOS_GAME_BIN}/libsteam_api.dylib"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${STEAM_API_LIBRARY}" "${MACOS_CSGO_BIN}/libsteam_api.dylib"
+        COMMENT "Copying the locally supplied arm64 Steam API runtime"
+        VERBATIM)
+endif()
 
 if( USE_SCALEFORM )
     add_subdirectory(scaleformui) #DUMMY cmake project so CLion can do analysis

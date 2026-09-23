@@ -937,9 +937,10 @@ bool CBaseServer::ProcessConnectionlessPacket(netpacket_t * packet)
 
 		case A2S_GETCHALLENGE :  
 #if !defined(NO_STEAM)
-			// Drop packet if we don't yet have our Steam ID
-			// because we're still logging on
-			if ( !Steam3Server().BHasLogonResult() )
+			// Internet servers wait for Steam to assign an identity.  A standalone
+			// listen server deliberately falls back to sv_lan when Steam is absent,
+			// so it must still answer its local client's challenge request.
+			if ( !sv_lan.GetBool() && !Steam3Server().BHasLogonResult() )
 				break;
 #endif
 			ReplyChallenge( packet->from, msg );

@@ -1,16 +1,10 @@
 #include <stdio.h>
 
-#if !defined(OSX) && !defined (LINUX)
 extern "C"
 {
-#endif
-
 #include "lua.h"
 #include "lauxlib.h"
-
-#if !defined(OSX) && !defined (LINUX)
 }
-#endif
 
 #include "vec3.h"
 

@@ -45,6 +45,15 @@ endif()
 
 if( LINUXALL )
     target_link_libraries(${OUTBINNAME} SDL2)
+elseif( APPLE )
+    # Launcher owns the SDL window/event loop on macOS. Linking it explicitly
+    # also makes SDL available to TOGL's runtime-resolved entry points.
+    find_library(LAUNCHER_SDL2_LIBRARY SDL2
+        PATHS /opt/homebrew/opt/sdl2/lib
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    target_link_libraries(${OUTBINNAME} "${LAUNCHER_SDL2_LIBRARY}")
 endif()
 
 target_sources(${OUTBINNAME} PRIVATE "${SRCDIR}/public/filesystem_init.cpp")
@@ -52,7 +61,7 @@ target_sources(${OUTBINNAME} PRIVATE "launcher.cpp")
 target_sources(${OUTBINNAME} PRIVATE "reslistgenerator.cpp")
 
 target_link_libraries(${OUTBINNAME} appframework_client tier1_client tier2_client tier3_client interfaces_client )
-target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so) # Link to proprietary steamapi
+target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY}) # Link to proprietary steamapi
 if( NOT IS_LIB_PROJECT AND GL )
     target_link_libraries(${OUTBINNAME} libtogl_client) # Link to precompiled togl
 endif()

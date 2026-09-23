@@ -600,6 +600,6 @@ endif()
 #Linking is sloppy here and continued more in cstrike15
 target_link_libraries(${OUTBINNAME} bonesetup_client choreoobjects_client mathlib_extended_client )
 target_link_libraries(${OUTBINNAME} matsys_controls_client particles_client raytrace_client)
-target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so) # Link to proprietary steamapi
+target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY}) # Link to proprietary steamapi
 target_link_libraries(${OUTBINNAME} tier3_client vgui_controls_client videocfg_client vtf_client resourcefile_client )
 target_link_libraries(${OUTBINNAME} libprotobuf) #from /thirdparty

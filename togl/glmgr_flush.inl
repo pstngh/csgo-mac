@@ -195,7 +195,7 @@ FORCEINLINE void GLMContext::FlushDrawStates( uint nStartIndex, uint nEndIndex, 
 				}
 			}
 
-			gGL->glUseProgram( (GLuint)pNewPair->m_program );
+			gGL->glUseProgram( static_cast<GLuint>( reinterpret_cast<uintptr_t>( pNewPair->m_program ) ) );
 			
 			GL_BATCH_PERF( m_FlushStats.m_nTotalProgramPairChanges++; )
 

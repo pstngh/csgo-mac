@@ -63,7 +63,9 @@ public:
 
 	virtual bool Init( void ) OVERRIDE;
 	virtual void Shutdown( void ) OVERRIDE;
-	virtual void Update( float frametime ) OVERRIDE;
+	// CAutoGameSystemPerFrame exposes Update only in CLIENT_DLL builds; keep
+	// this virtual for shared source without claiming a server-side override.
+	virtual void Update( float frametime );
 	virtual const char* Name( void ) OVERRIDE { return "CSGOWorkshop"; }
 
 	bool CreateThumbnailFileRequest( const PublishedFileInfo_t &info );

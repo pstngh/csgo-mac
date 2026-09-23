@@ -45,7 +45,8 @@ struct CpuIdResult_t
 
 static bool cpuid( unsigned long function, CpuIdResult_t &out )
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined( __e2k__ )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __e2k__ ) || defined( __aarch64__ )
+	out.Reset();
 	return false;
 #elif defined(GNUC)
 	unsigned long out_eax,out_ebx,out_ecx,out_edx;
@@ -124,7 +125,8 @@ static bool cpuid( unsigned long function, CpuIdResult_t &out )
 
 static bool cpuidex( unsigned long function, unsigned long subfunction, CpuIdResult_t &out )
 {
-#if defined( _X360 ) || defined( _PS3 ) || defined( __e2k__ )
+#if defined( _X360 ) || defined( _PS3 ) || defined( __e2k__ ) || defined( __aarch64__ )
+	out.Reset();
 	return false;
 #elif defined(GNUC)
 	unsigned long out_eax, out_ebx, out_ecx, out_edx;
@@ -279,6 +281,10 @@ static bool CheckSSETechnology(void)
 {
 #if defined( _X360 ) || defined( _PS3 )
 	return true;
+#elif defined( __aarch64__ )
+	// Apple Silicon always has NEON; x86 SIMD intrinsics are translated by
+	// sse2neon in this build.
+	return true;
 #elif defined( __e2k__ )
 	#if defined( __SSE__ )
 		return true;
@@ -299,6 +305,8 @@ static bool CheckSSE2Technology(void)
 {
 #if defined( _X360 ) || defined( _PS3 )
 	return false;
+#elif defined( __aarch64__ )
+	return true;
 #elif defined( __e2k__ )
 	#if defined( __SSE2__ )
 		return true;
@@ -930,7 +938,27 @@ const CPUInformation& GetCPUInformation()
 
 #endif
 
-#if defined(__e2k__)
+	#if defined(__aarch64__)
+		// The engine's SSE/SSE2 code paths are provided by sse2neon on Apple
+		// Silicon. CPUID does not exist on ARM, so populate the semantic feature
+		// flags directly instead of leaving the zeroed structure untouched.
+		pi.m_bRDTSC = true;
+		pi.m_bCMOV = true;
+		pi.m_bFCMOV = true;
+		pi.m_bMMX = false;
+		pi.m_bSSE = true;
+		pi.m_bSSE2 = true;
+		pi.m_bSSE3 = false;
+		pi.m_bSSSE3 = false;
+		pi.m_bSSE4a = false;
+		pi.m_bSSE41 = false;
+		pi.m_bSSE42 = false;
+		pi.m_b3DNow = false;
+		pi.m_bAVX = false;
+		pi.m_szProcessorID = const_cast<tchar *>( _T("Apple") );
+		pi.m_szProcessorBrand = const_cast<tchar *>( _T("Apple Silicon") );
+		pi.m_bHT = false;
+	#elif defined(__e2k__)
 	// e2k CPU don't have CPUID
 
 	// Determine Processor Features:
@@ -1064,4 +1092,3 @@ const CPUInformation& GetCPUInformation()
 #endif
 	return pi;
 }
-

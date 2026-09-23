@@ -1846,8 +1846,11 @@ void CL_FullyConnected( void )
 
 #ifndef DEDICATED
 	// Register a listener that will be uploading our own avatar data to the game server
-	static CEngineReliableAvatarCallback_t s_EngineReliableAvatarCallback;
-	s_EngineReliableAvatarCallback.UploadMyOwnAvatarToGameServer();
+	if ( Steam3Client().SteamUser() && Steam3Client().SteamFriends() && Steam3Client().SteamUtils() )
+	{
+		static CEngineReliableAvatarCallback_t s_EngineReliableAvatarCallback;
+		s_EngineReliableAvatarCallback.UploadMyOwnAvatarToGameServer();
+	}
 #endif
 }
 

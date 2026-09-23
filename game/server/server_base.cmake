@@ -514,7 +514,7 @@ target_sources(${OUTBINNAME} PRIVATE "${SRCDIR}/common/CegClientWrapper.cpp")
 
 target_link_libraries(${OUTBINNAME} bonesetup_client choreoobjects_client mathlib_client mathlib_extended_client libtier0_client libvstdlib_client interfaces_client)
 target_link_libraries(${OUTBINNAME} particles_client tier3_client vgui_controls_client responserules_runtime_client )
-target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so) # Link to proprietary steamapi
+target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY}) # Link to proprietary steamapi
 target_link_libraries(${OUTBINNAME} kisak_gcsdk_client)
 target_link_libraries(${OUTBINNAME} libprotobuf) #from /thirdparty
 target_link_libraries(${OUTBINNAME} bitmap_client dmxloader_client tier2_client)

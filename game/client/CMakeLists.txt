@@ -375,8 +375,7 @@ if( USE_ROCKETUI )
     target_link_libraries(${OUTBINNAME} RmlCore)
 endif()
 target_link_libraries(${OUTBINNAME} matsys_controls_client)
-target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so) #proprietary steam api
+target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY}) #proprietary steam api
 target_link_libraries(${OUTBINNAME} kisak_gcsdk_client)
 target_link_libraries(${OUTBINNAME} tier2_client tier3_client vgui_controls_client vtf_client bzip2_client libvstdlib_client dmxloader_client bitmap_client mathlib_client tier2_client )
 #target_link_libraries(${OUTBINNAME} protobuf )
-

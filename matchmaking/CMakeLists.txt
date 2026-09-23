@@ -27,7 +27,7 @@ target_compile_definitions(${OUTBINNAME} PRIVATE -DMATCHMAKING_DLL)
 target_link_libraries(${OUTBINNAME} matchmakingbase)
 target_link_libraries(${OUTBINNAME} tier2_client mathlib_client)
 target_link_libraries(${OUTBINNAME} kisak_gcsdk_client)
-target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so) # link to proprietary steamapi
+target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY}) # link to proprietary steamapi
 
 #CSGO Matchmaking DS
 set(OUTBINNAME "matchmaking_ds_client")
@@ -37,5 +37,4 @@ target_compile_definitions(${OUTBINNAME} PRIVATE -DMATCHMAKING_DS_DLL -DSWDS)
 target_link_libraries(${OUTBINNAME} matchmakingbase_ds)
 target_link_libraries(${OUTBINNAME} tier2_client mathlib_client)
 target_link_libraries(${OUTBINNAME} kisak_gcsdk_client)
-target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so) # link to proprietary steamapi
-
+target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY}) # link to proprietary steamapi

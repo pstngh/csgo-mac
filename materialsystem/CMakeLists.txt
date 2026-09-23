@@ -38,6 +38,14 @@ if( NOT POSIX )
 endif()
 add_definitions(-DALLOW_TEXT_MODE=1)
 
+# Headers inside shaderapidx9 include material-system internals by basename.
+# VPC supplied this path implicitly; make it explicit for the native CMake
+# build and case-sensitive modern toolchains.
+target_include_directories(${OUTBINNAME} PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${SHADERAPIDX9DIR}"
+)
+
 target_sources(${OUTBINNAME} PRIVATE "CColorCorrection.cpp")
 target_sources(${OUTBINNAME} PRIVATE "cmaterial.cpp")
 target_sources(${OUTBINNAME} PRIVATE "cmaterial_queuefriendly.cpp")

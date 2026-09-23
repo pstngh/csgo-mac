@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright Â© 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -17,6 +17,7 @@
 
 
 class IHandleEntity;
+template< class T > class CHandle;
 
 // -------------------------------------------------------------------------------------------------- //
 // CBaseHandle.
@@ -30,6 +31,7 @@ enum INVALID_EHANDLE_tag
 class CBaseHandle
 {
 friend class CBaseEntityList;
+template< class T > friend class CHandle;
 
 public:
 

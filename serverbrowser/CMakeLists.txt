@@ -45,7 +45,7 @@ if( (NOT DEFINED NO_STEAM) )
     #grug
     #Looks like we have to include libsteam_api
     message("building with steam_api")
-    target_link_libraries(${OUTBINNAME} ${LIBPUBLIC}/libsteam_api.so)
+    target_link_libraries(${OUTBINNAME} ${STEAM_API_LIBRARY})
 else()
     #message(FATAL_ERROR "CMake steam_api integration is disabled.")
     message(FATAL_ERROR "We have to build with steam currently =(")

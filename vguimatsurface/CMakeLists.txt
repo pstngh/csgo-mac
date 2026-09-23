@@ -41,6 +41,21 @@ target_sources(${OUTBINNAME} PRIVATE "${SRCDIR}/public/vgui_controls/vgui_contro
 
 target_link_libraries(${OUTBINNAME} vgui_controls_client vgui_surfacelib_client dmxloader_client tier2_client tier3_client mathlib_client bitmap_client libtier0_client libvstdlib_client )
 
+if( APPLE )
+    find_library(VGUI_CORETEXT_FRAMEWORK CoreText REQUIRED)
+    find_library(VGUI_COREGRAPHICS_FRAMEWORK CoreGraphics REQUIRED)
+    find_library(VGUI_SDL2_LIBRARY SDL2
+        PATHS /opt/homebrew/opt/sdl2/lib
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    target_link_libraries(${OUTBINNAME}
+        "${VGUI_CORETEXT_FRAMEWORK}"
+        "${VGUI_COREGRAPHICS_FRAMEWORK}"
+        "${VGUI_SDL2_LIBRARY}"
+    )
+endif()
+
 if( LINUXALL )
     target_link_libraries(${OUTBINNAME} fontconfig freetype SDL2)
 endif()

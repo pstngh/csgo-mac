@@ -16,10 +16,8 @@
 
 #include "platform.h"
 
-#if !defined(OSX) && !defined(POSIX)
 extern "C"
 {
-#endif
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
@@ -29,9 +27,7 @@ extern "C"
 #include "lobject.h"
 #include "lstate.h"
 #include "ldo.h"
-#if !defined(OSX) && !defined(POSIX)
 }
-#endif
 
 #include "vec3.h"
 
@@ -1499,4 +1495,3 @@ int main( int argc, const char **argv)
 
 
 // add a check stack auto class to each function
-

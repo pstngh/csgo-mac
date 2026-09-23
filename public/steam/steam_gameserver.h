@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2008, Valve Corporation, All rights reserved. =======
+//====== Copyright Â© 1996-2008, Valve Corporation, All rights reserved. =======
 //
 // Purpose: 
 //
@@ -128,6 +128,12 @@ private:
 S_API HSteamPipe S_CALLTYPE SteamGameServer_GetHSteamPipe();
 S_API HSteamUser S_CALLTYPE SteamGameServer_GetHSteamUser();
 S_API bool S_CALLTYPE SteamInternal_GameServer_Init( uint32 unIP, uint16 usPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString );
+#if defined( __aarch64__ )
+// Current universal Steam runtimes export the V2 initializer.  Its integer
+// result is ESteamAPIInitResult (zero is success); spelling it as int keeps
+// this older SDK header ABI-compatible without importing unrelated new APIs.
+S_API int S_CALLTYPE SteamInternal_GameServer_Init_V2( uint32 unIP, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString, const char *pszInternalCheckInterfaceVersions, void *pOutErrMsg );
+#endif
 
 #if defined( VERSION_SAFE_STEAM_API_INTERFACES )
 #define SteamGameServer_InitSafe SteamGameServer_Init
@@ -217,8 +223,23 @@ inline bool CSteamGameServerAPIContext::Init()
 
 inline bool SteamGameServer_Init( uint32 unIP, uint16 usSteamPort, uint16 usGamePort, uint16 usQueryPort, EServerMode eServerMode, const char *pchVersionString )
 {
+#if defined( __aarch64__ )
+	const char *pszInternalCheckInterfaceVersions =
+		STEAMUTILS_INTERFACE_VERSION "\0"
+		STEAMGAMESERVER_INTERFACE_VERSION "\0"
+		STEAMGAMESERVERSTATS_INTERFACE_VERSION "\0"
+		STEAMHTTP_INTERFACE_VERSION "\0"
+		STEAMINVENTORY_INTERFACE_VERSION "\0"
+		STEAMNETWORKING_INTERFACE_VERSION "\0"
+		STEAMUGC_INTERFACE_VERSION "\0"
+		"\0";
+	(void)usSteamPort; // Removed from the V2 API.
+	if ( SteamInternal_GameServer_Init_V2( unIP, usGamePort, usQueryPort, eServerMode, pchVersionString, pszInternalCheckInterfaceVersions, NULL ) != 0 )
+		return false;
+#else
 	if ( !SteamInternal_GameServer_Init( unIP, usSteamPort, usGamePort, usQueryPort, eServerMode, pchVersionString ) )
 		return false;
+#endif
 
 #if !defined( VERSION_SAFE_STEAM_API_INTERFACES ) && !defined( STEAM_API_EXPORTS )
 	if ( !SteamInternal_GlobalContextGameServer().Init() )

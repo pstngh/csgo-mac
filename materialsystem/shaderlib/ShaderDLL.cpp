@@ -52,7 +52,7 @@ private:
 //-----------------------------------------------------------------------------
 // Global interfaces/structures
 //-----------------------------------------------------------------------------
-#if !defined( _PS3 ) && !defined( _OSX )
+#if !defined( _PS3 )
 IMaterialSystemHardwareConfig* g_pHardwareConfig;
 const MaterialSystem_Config_t *g_pConfig;
 #else
@@ -119,9 +119,6 @@ bool CShaderDLL::Connect( CreateInterfaceFn factory, bool bIsMaterialSystem )
 {
 #if defined( _PS3 )
 	return true;
-#elif defined( OSX )
-	g_pSLShaderSystem =  (IShaderSystem*)factory( SHADERSYSTEM_INTERFACE_VERSION, NULL );
-	return ( g_pSLShaderSystem != NULL );
 #else
 	g_pHardwareConfig =  (IMaterialSystemHardwareConfig*)factory( MATERIALSYSTEM_HARDWARECONFIG_INTERFACE_VERSION, NULL );
 	g_pConfig = (const MaterialSystem_Config_t*)factory( MATERIALSYSTEM_CONFIG_VERSION, NULL );
@@ -139,9 +136,7 @@ bool CShaderDLL::Connect( CreateInterfaceFn factory, bool bIsMaterialSystem )
 
 void CShaderDLL::Disconnect( bool bIsMaterialSystem )
 {
-#if defined( OSX )
-	g_pSLShaderSystem = NULL;
-#elif !defined( _PS3 )
+#if !defined( _PS3 )
 	if ( !bIsMaterialSystem )
 	{
 		ConVar_Unregister();

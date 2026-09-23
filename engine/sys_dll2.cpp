@@ -803,11 +803,16 @@ bool CEngineAPI::SetStartupInfo( StartupInfo_t &info )
 #endif // CSTRIKE15
 	}
 
-	if ( !Steam3Client().IsInitialized() || !Steam3Client().SteamUser() ||
-		!Steam3Client().SteamUser()->GetSteamID().IsValid() || !Steam3Client().SteamUser()->GetSteamID().BIndividualAccount() || !Steam3Client().SteamUser()->GetSteamID().GetAccountID() )
+	// Kisak's native macOS build supports standalone/offline startup.  Keep
+	// Steam integration when a client is present, but do not make a valid
+	// logged-in Steam account a prerequisite for initializing the engine.
+	ISteamUser *pSteamUser = Steam3Client().SteamUser();
+	const bool bSteamUserAvailable = Steam3Client().IsInitialized() && pSteamUser &&
+		pSteamUser->GetSteamID().IsValid() && pSteamUser->GetSteamID().BIndividualAccount() &&
+		pSteamUser->GetSteamID().GetAccountID();
+	if ( !bSteamUserAvailable )
 	{
-		Error( "FATAL ERROR: Failed to connect with local Steam Client process!\n\nPlease make sure that you are running latest version of Steam Client.\nYou can check for Steam Client updates using Steam main menu:\n             Steam > Check for Steam Client Updates..." );
-		return false;
+		Warning( "Steam client unavailable; continuing in standalone insecure mode.\n" );
 	}
 
 	//
@@ -821,7 +826,7 @@ bool CEngineAPI::SetStartupInfo( StartupInfo_t &info )
 			Msg( "USRLOCAL path using environment setting '%s':\n%s\n", "USRLOCAL" DLLExtTokenPaste2( VPCGAMECAPS ), pszLocalOverride );
 			g_pFileSystem->AddSearchPath( pszLocalOverride, "USRLOCAL" );
 		}
-		else if ( Steam3Client().SteamUser()->GetUserDataFolder( chUserLocalDataFolder, sizeof( chUserLocalDataFolder ) ) )
+		else if ( bSteamUserAvailable && pSteamUser->GetUserDataFolder( chUserLocalDataFolder, sizeof( chUserLocalDataFolder ) ) )
 		{
 			Msg( "USRLOCAL path using Steam profile data folder:\n%s\n", chUserLocalDataFolder );
 			g_pFileSystem->AddSearchPath( chUserLocalDataFolder, "USRLOCAL" );

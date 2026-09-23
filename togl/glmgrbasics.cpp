@@ -2590,9 +2590,9 @@ bool	GLMDetectOGLP( void )
 #include <sys/types.h>  
 #ifndef _WIN32
 	#include <unistd.h>
-	//lwss: remove deprecated header.
-	//#include <sys/sysctl.h>
-	//lwss end
+	#ifdef OSX
+		#include <sys/sysctl.h>
+	#endif
 #endif
 
 // From Technical Q&A QA1361  
@@ -4632,7 +4632,6 @@ unsigned char g_glmDebugFontMap[ 128 * 128 ] =
 "                                                                                                                                "
 "                                                                                                                                "
 };
-
 
 
 

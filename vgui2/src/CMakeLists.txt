@@ -37,7 +37,7 @@ if( WINDOWS OR X360 OR PS3 OR LINUXALL )
     target_sources(${OUTBINNAME} PRIVATE "InputWin32.cpp")
 endif()
 if( OSXALL )
-    #$File	"inputosx.cpp" 					[$OSXALL]
+    target_sources(${OUTBINNAME} PRIVATE "inputosx.cpp")
 endif()
 target_sources(${OUTBINNAME} PRIVATE "MemoryBitmap.cpp")
 target_sources(${OUTBINNAME} PRIVATE "Memorybitmap.h")
@@ -61,3 +61,18 @@ target_sources(${OUTBINNAME} PRIVATE "VPanelWrapper.cpp")
 target_sources(${OUTBINNAME} PRIVATE "keyrepeat.cpp")
 
 target_link_libraries(${OUTBINNAME} vgui_surfacelib_client tier2_client tier3_client libvstdlib_client)
+
+if( APPLE )
+    find_library(VGUI2_COREFOUNDATION_FRAMEWORK CoreFoundation REQUIRED)
+    find_library(VGUI2_CARBON_FRAMEWORK Carbon REQUIRED)
+    find_library(VGUI2_SDL2_LIBRARY SDL2
+        PATHS /opt/homebrew/opt/sdl2/lib
+        NO_DEFAULT_PATH
+        REQUIRED
+    )
+    target_link_libraries(${OUTBINNAME}
+        "${VGUI2_COREFOUNDATION_FRAMEWORK}"
+        "${VGUI2_CARBON_FRAMEWORK}"
+        "${VGUI2_SDL2_LIBRARY}"
+    )
+endif()

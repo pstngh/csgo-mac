@@ -1157,7 +1157,11 @@ typedef void * HINSTANCE;
 		#define DebuggerBreak() {  __asm volatile ("tw 31,1,1"); } 
 		#endif
 	#elif defined( OSX )
-		#define DebuggerBreak()  if ( Plat_IsInDebugSession() ) asm( "int3" ); else { raise(SIGTRAP); }
+		#if defined( __aarch64__ )
+			#define DebuggerBreak()  do { if ( Plat_IsInDebugSession() ) __builtin_debugtrap(); else raise(SIGTRAP); } while ( 0 )
+		#else
+			#define DebuggerBreak()  if ( Plat_IsInDebugSession() ) asm( "int3" ); else { raise(SIGTRAP); }
+		#endif
 	#elif ( defined( PLATFORM_CYGWIN ) || defined( PLATFORM_POSIX ) ) && !defined( __e2k__ )
 		#define DebuggerBreak()		__asm__( "int $0x3;")
 	#else
@@ -1390,7 +1394,7 @@ typedef int socklen_t;
 // Works for PS3 
 	inline void SetupFPUControlWord()
 	{
-#if defined ( _PS3 ) || defined ( __e2k__ )
+#if defined ( _PS3 ) || defined ( __e2k__ ) || defined ( __aarch64__ )
 // TODO: PS3 compiler spits out the following errors:
 // C:/tmp/ccIN0aaa.s: Assembler messages:
 // C:/tmp/ccIN0aaa.s(80): Error: Unrecognized opcode: `fnstcw'
@@ -1860,6 +1864,8 @@ inline uint64 Plat_Rdtsc()
 	return ( ( ( uint64 )hi ) << 32 ) | lo;
 #elif defined( __e2k__ )
 	return ( uint64 )__rdtsc();
+#elif defined( __aarch64__ )
+	return ( uint64 )__builtin_readcyclecounter();
 #else
 #error
 #endif
