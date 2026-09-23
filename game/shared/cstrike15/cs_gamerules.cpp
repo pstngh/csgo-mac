@@ -9847,7 +9847,8 @@ static bool Helper_CheckFieldAppliesToTeam( char const *szField, int nTeam )
 				}
 
 				// BONUS TIME!!!!
-				else if ( !m_bDMBonusActive && m_flDMBonusStartTime > 0 )
+				else if ( !m_bDMBonusActive && m_flDMBonusStartTime > 0 &&
+					GetDMBonusWeaponLoadoutSlot() != LOADOUT_POSITION_INVALID )
 				{
 					m_bDMBonusActive = true;
 

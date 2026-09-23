@@ -11957,6 +11957,8 @@ bool CCSPlayer::AttemptToBuyDMBonusWeapon( void )
 		return false;
 
 	loadout_positions_t unPosition = CSGameRules()->GetDMBonusWeaponLoadoutSlot();
+	if ( unPosition == LOADOUT_POSITION_INVALID )
+		return false;
 
 	const CBaseCombatWeapon *pHaveWeapon = Weapon_GetPosition( unPosition );
 
@@ -11986,6 +11988,8 @@ bool CCSPlayer::AttemptToBuyDMBonusWeapon( void )
 	if ( CanPlayerBuy( false ) )
 	{
 		CEconItemView* pItem = Inventory()->GetItemInLoadout( GetTeamNumber(), unPosition );
+		if ( !pItem || !pItem->GetItemDefinition() || !pItem->GetStaticData() )
+			return false;
 
 		BuyResult_e buyresult = HandleCommand_Buy( pItem->GetItemDefinition()->GetDefinitionName(), unPosition, false ); 
 
@@ -11994,7 +11998,7 @@ bool CCSPlayer::AttemptToBuyDMBonusWeapon( void )
 
 			CSWeaponID wid = WeaponIdFromString( pItem->GetStaticData()->GetItemClass() );
 			const CCSWeaponInfo* pWeaponInfo = GetWeaponInfo( wid );
-			int iSlot = pWeaponInfo->GetBucketSlot( pItem );
+			int iSlot = pWeaponInfo ? pWeaponInfo->GetBucketSlot( pItem ) : -1;
 
 			switch ( iSlot )
 			{

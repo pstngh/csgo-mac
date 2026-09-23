@@ -725,7 +725,12 @@ public:
 	float GetCMMItemDropRevealEndTime() { return m_flCMMItemDropRevealEndTime; }
 	bool IsDroppingItems() { return m_bIsDroppingItems; }
 
-	loadout_positions_t GetDMBonusWeaponLoadoutSlot( void ) { return ( loadout_positions_t )m_unDMBonusWeaponLoadoutSlot.Get(); }
+	loadout_positions_t GetDMBonusWeaponLoadoutSlot( void )
+	{
+		const uint16 slot = m_unDMBonusWeaponLoadoutSlot.Get();
+		return slot == static_cast< uint16 >( LOADOUT_POSITION_INVALID )
+			? LOADOUT_POSITION_INVALID : static_cast< loadout_positions_t >( slot );
+	}
 	float GetDMBonusStartTime( void ) { return m_flDMBonusStartTime; }
 	float GetDMBonusTimeLength( void ) { return m_flDMBonusTimeLength; }
 	bool IsDMBonusActive( void ) { return m_bDMBonusActive; }
