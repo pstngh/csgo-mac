@@ -90,8 +90,10 @@ Build the launcher app in a playable game directory:
 
 Open `CSGO Launcher.app` in that directory to choose an installed map, bot count
 and difficulty, windowed or fullscreen resolution, and crosshair color, size,
-gap, thickness, opacity, dot, and outline. Graphics Settings offers texture
-detail, texture filtering, anti-aliasing, shadows, shader detail, and VSync.
+gap, thickness, opacity, dot, and outline. The overall Quality menu offers Low, Medium, High, and Very High presets; Custom
+appears when individual graphics choices differ from a preset. Graphics Settings
+still offers texture detail, texture filtering, anti-aliasing, shadows, shader
+detail, and VSync, and the saved individual choices remain authoritative.
 Graphics choices apply on the next launch; anti-aliasing and VSync are also
 passed at startup so the video mode uses them immediately. The launcher previews
 the crosshair, saves the choices, writes `csgo/cfg/mac_launcher.cfg`, and starts

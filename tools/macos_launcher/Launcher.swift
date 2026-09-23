@@ -61,6 +61,14 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
     private let resolutionPopup = NSPopUpButton()
     private let fullscreenCheckbox = NSButton(checkboxWithTitle: "Fullscreen", target: nil, action: nil)
     private let graphicsButton = NSButton(title: "Graphics Settings…", target: nil, action: nil)
+    private let qualityPopup = NSPopUpButton()
+    // Custom is derived from the saved individual settings, which remain authoritative.
+    private let qualityPresets = [
+        [0, 0, 0, 0, 0], // Low
+        [1, 1, 0, 1, 1], // Medium
+        [2, 3, 2, 2, 1], // High
+        [3, 5, 2, 3, 1], // Very High
+    ]
     private let texturePopup = NSPopUpButton()
     private let filteringPopup = NSPopUpButton()
     private let antialiasingPopup = NSPopUpButton()
@@ -121,6 +129,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
             botCountPopup.addItem(withTitle: count == 0 ? "0 (solo)" : "\(count)")
         }
         difficultyPopup.addItems(withTitles: ["Easy", "Normal", "Hard", "Expert"])
+        qualityPopup.addItems(withTitles: ["Custom", "Low", "Medium", "High", "Very High"])
         texturePopup.addItems(withTitles: ["Low", "Medium", "High", "Very High"])
         filteringPopup.addItems(withTitles: ["Bilinear", "Trilinear", "Anisotropic 2×", "Anisotropic 4×", "Anisotropic 8×", "Anisotropic 16×"])
         antialiasingPopup.addItems(withTitles: ["Off", "2× MSAA", "4× MSAA"])
@@ -168,6 +177,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         shadowsPopup.selectItem(at: storedInteger("shadows", defaultValue: 1, range: 0...3))
         shadersPopup.selectItem(at: storedInteger("shaderDetail", defaultValue: 1, range: 0...1))
         vsyncCheckbox.state = defaults.bool(forKey: "vsync") ? .on : .off
+        syncGraphicsQuality()
 
         sizeSlider.integerValue = storedInteger("size", defaultValue: 5, range: 1...20)
         gapSlider.integerValue = storedInteger("gap", defaultValue: 1, range: 0...15)
@@ -188,10 +198,10 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
     }
 
     private func buildWindow() {
-        for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, colorWell] {
+        for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, qualityPopup, colorWell] {
             control.widthAnchor.constraint(equalToConstant: 359).isActive = true
         }
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 550, height: 750),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 550, height: 790),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = "CS:GO Mac Launcher"
         window.center()
@@ -216,6 +226,9 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         stack.addArrangedSubview(row("Bot difficulty", control: difficultyPopup))
         stack.addArrangedSubview(row("Resolution", control: resolutionPopup))
         stack.addArrangedSubview(row("Display", control: fullscreenCheckbox))
+        qualityPopup.target = self
+        qualityPopup.action = #selector(graphicsQualityChanged)
+        stack.addArrangedSubview(row("Quality", control: qualityPopup))
         graphicsButton.target = self
         graphicsButton.action = #selector(showGraphicsSettings)
         stack.addArrangedSubview(row("Graphics", control: graphicsButton))
@@ -324,7 +337,27 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         panel.makeKeyAndOrderFront(nil)
     }
 
+    @objc private func graphicsQualityChanged() {
+        let index = qualityPopup.indexOfSelectedItem - 1
+        guard qualityPresets.indices.contains(index) else { return }
+        let preset = qualityPresets[index]
+        texturePopup.selectItem(at: preset[0])
+        filteringPopup.selectItem(at: preset[1])
+        antialiasingPopup.selectItem(at: preset[2])
+        shadowsPopup.selectItem(at: preset[3])
+        shadersPopup.selectItem(at: preset[4])
+        saveSettings()
+    }
+
+    private func syncGraphicsQuality() {
+        let current = [texturePopup, filteringPopup, antialiasingPopup, shadowsPopup, shadersPopup]
+            .map(\.indexOfSelectedItem)
+        let match = qualityPresets.firstIndex(of: current)
+        qualityPopup.selectItem(at: match.map { $0 + 1 } ?? 0)
+    }
+
     @objc private func settingsChanged() {
+        syncGraphicsQuality()
         refreshPreview()
         saveSettings()
     }

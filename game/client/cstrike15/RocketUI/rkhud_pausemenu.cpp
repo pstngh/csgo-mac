@@ -45,7 +45,7 @@ public:
         }
         else if( id == "pm_disconnect" )
         {
-            engine->ClientCmd_Unrestricted("disconnect");
+            engine->ClientCmd_Unrestricted("quit");
         }
     }
 };
@@ -67,6 +67,12 @@ void RocketPauseMenuDocument::LoadDialog()
             /* Exit */
         }
         RocketUI()->RegisterPauseMenu( RocketPauseMenuDocument::TogglePanel );
+
+        // The installed RocketUI asset labels this button Disconnect. Change its
+        // visible label here so existing game content gets the Quit action too.
+        Rml::Element *pQuitButton = m_pInstance->GetElementById( "pm_disconnect" );
+        if ( pQuitButton )
+            pQuitButton->SetInnerRML( "Quit" );
 
         // Add a listener to each button, this seems better than custom events for these
         Rml::ElementList menuButtons;

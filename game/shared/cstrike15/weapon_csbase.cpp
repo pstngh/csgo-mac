@@ -3826,6 +3826,9 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
     float angle;
     float magnitude;
     int seed;
+#if defined( OSX )
+    unsigned int spraySeed = 0;
+#endif
     CCSPlayer *pPlayer = GetPlayerOwner();
 
     if ( !pPlayer )
@@ -3840,9 +3843,16 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
     else
     {
 #if defined( OSX )
-        // Keep kickback, but sample a table entry for every shot
-        // instead of replaying the weapon's fixed spray sequence.
-        seed = GetPredictionRandomSeed() & 0x7fffffff;
+        // Mix the predicted command seed with the shot index so successive
+        // automatic shots cannot walk the weapon's fixed recoil table.
+        spraySeed = (unsigned int)GetPredictionRandomSeed() ^
+            ( (unsigned int)( (int)m_flRecoilIndex + 1 ) * 0x9e3779b9u );
+        spraySeed ^= spraySeed >> 16;
+        spraySeed *= 0x7feb352du;
+        spraySeed ^= spraySeed >> 15;
+        spraySeed *= 0x846ca68bu;
+        spraySeed ^= spraySeed >> 16;
+        seed = (int)( spraySeed & 0x7fffffffu );
 #else
         seed = (int) m_flRecoilIndex;
 #endif
@@ -3857,6 +3867,15 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
         g_WeaponRecoilData.GetRecoilOffsets( this, weaponMode, seed, angle, magnitude );
     }
 
+#if defined( OSX )
+    if ( IsFullAuto() )
+    {
+        // Keep an upward, visible kick without the table's repeating side drift.
+        // The same predicted seed is used on the client and listen server.
+        angle = ( (int)( spraySeed % 2001u ) - 1000 ) * 0.035f;
+        magnitude *= 0.55f;
+    }
+#endif
     pPlayer->KickBack( angle, magnitude );
     //lwss end
 }

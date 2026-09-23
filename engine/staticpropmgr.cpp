@@ -1716,7 +1716,15 @@ void CStaticPropMgr::LevelShutdown()
 
 	m_bLevelInitialized = false;
 
+#if defined( OSX )
+	// Prop destructors destroy studio decals. During map shutdown this runs
+	// outside a render frame; use the hardware context after queued work drains.
+	MaterialLock_t hMaterialLock = materials->Lock();
+#endif
 	m_StaticProps.Purge();
+#if defined( OSX )
+	materials->Unlock( hMaterialLock );
+#endif
 
 	FOR_EACH_VEC( m_StaticPropDict, i )
 	{

@@ -4245,7 +4245,8 @@ void C_CSPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, f
 	if ( IsLocalPlayer() && IsAlive() && !::input->CAM_IsThirdPerson() && m_flLeanAngle != 0.0f )
 	{
 		const Vector desired = eyeOrigin + CS_AALeanEyeOffset( eyeAngles, m_flLeanAngle );
-		eyeOrigin = CS_AALeanTraceEye( this, EyePosition(), desired );
+		// Trace from the animation-adjusted camera origin used to form desired.
+		eyeOrigin = CS_AALeanTraceEye( this, eyeOrigin, desired );
 		// AA adds 0.1 in CG_CalcViewValues and 0.3 in CG_OffsetFirstPersonView.
 		eyeAngles[ROLL] += m_flLeanAngle * 0.4f;
 	}

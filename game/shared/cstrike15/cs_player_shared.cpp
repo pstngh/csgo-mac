@@ -222,38 +222,17 @@ Vector CCSPlayer::Weapon_ShootPosition()
 
 float CS_AdvanceAALean( float angle, int buttons, float frameTime )
 {
-	// OpenMoHAA Allied Assault multiplayer: 40-degree limit, leanAdd 10,
-	// leanRecoverSpeed 15, leanSpeed 4. AA permits leaning while moving.
-	const float dt = clamp( frameTime, 0.001f, 0.2f );
+	// Allied Assault-inspired 40-degree limit, 10/s lean response, and
+	// 15/s recovery. Lean remains available while moving.
+	const float dt = clamp( frameTime, 0.0f, 0.2f );
 	const bool left = ( buttons & IN_ALT1 ) != 0;
 	const bool right = ( buttons & IN_ALT2 ) != 0;
-
-	if ( left != right )
-	{
-		if ( left )
-		{
-			if ( angle <= -40.0f )
-				return -40.0f;
-			const float towardLimit = dt * ( -40.0f - angle ) * 10.0f;
-			return angle + Min( towardLimit, -dt * 4.0f );
-		}
-
-		if ( angle >= 40.0f )
-			return 40.0f;
-		return angle + dt * ( 40.0f - angle ) * 10.0f;
-	}
-
-	if ( angle < 0.0f )
-	{
-		const float towardZero = angle * dt * 15.0f;
-		return Min( 0.0f, angle - Min( -dt * 4.0f, towardZero ) );
-	}
-	if ( angle > 0.0f )
-	{
-		const float towardZero = angle * dt * 15.0f;
-		return Max( 0.0f, angle - Max( dt * 4.0f, towardZero ) );
-	}
-	return 0.0f;
+	const float target = left == right ? 0.0f : ( left ? -40.0f : 40.0f );
+	const float rate = target == 0.0f ? 15.0f : 10.0f;
+	// The exponential step gives both directions the same AA timing at any tick rate.
+	// It also removes the minimum step that made the camera snap near the limit.
+	const float next = angle + ( target - angle ) * ( 1.0f - expf( -rate * dt ) );
+	return fabsf( next ) < 0.01f && target == 0.0f ? 0.0f : clamp( next, -40.0f, 40.0f );
 }
 
 Vector CS_AALeanEyeOffset( const QAngle &viewAngles, float leanAngle )
