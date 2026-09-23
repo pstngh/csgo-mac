@@ -8,16 +8,6 @@ include_directories(${SRCDIR}/thirdparty/protobuf-2.5.0/src)
 
 add_definitions(-DPROTOBUF)
 
-#if( LINUXALL )
-#    set(PROTO_COMPILER "${SRCDIR}/devtools/bin/linux/protoc")
-#elseif( WINDOWS )
-#    set(PROTO_COMPILER "${SRCDIR}/devtools/bin/protoc.exe")
-#elseif( OSXALL )
-#    set(PROTO_COMPILER "${SRCDIR}/devtools/bin/osx32/protoc")
-#else()
-#    message(FATAL_ERROR "Platform Unknown!")
-#endif()
-
 # This is a target added in /thirdparty/protobuf-2.x. Use its generated full
 # path: GUI generators happened to find `protoc` by name, but a clean Ninja
 # build on macOS does not put the build directory on PATH.

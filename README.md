@@ -22,8 +22,6 @@ Make sure you clone this repo inside an existing folder!
 
 Kisak-Strike uses CMake, the following sections will provide more information.
 
-If you want to build with VPC for an authentic experience(not recommended), see https://gist.github.com/LWSS/9d2cd3205d197545d64fd27ee897fd53 for a rough draft from around when this project started.
-
 ## Packages
 SDL2 SDL2_mixer tcmalloc_minimal rt openal curl ssl z crypto dl pthread fontconfig freetype GL
 

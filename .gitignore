@@ -46,9 +46,6 @@ lib/public/linux64/*.o
 external/crypto++-5.61/*.o
 external/crypto++-5.61/libcryptopp.a
 
-#VPC makefile
-csgo_partner.mak
-
 #Thirdparty
 /thirdparty/RmlUi/build/
 /thirdparty/RmlUi/Samples/
