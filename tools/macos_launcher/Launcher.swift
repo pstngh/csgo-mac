@@ -60,6 +60,13 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
     private let difficultyPopup = NSPopUpButton()
     private let resolutionPopup = NSPopUpButton()
     private let fullscreenCheckbox = NSButton(checkboxWithTitle: "Fullscreen", target: nil, action: nil)
+    private let graphicsButton = NSButton(title: "Graphics Settings…", target: nil, action: nil)
+    private let texturePopup = NSPopUpButton()
+    private let filteringPopup = NSPopUpButton()
+    private let antialiasingPopup = NSPopUpButton()
+    private let shadowsPopup = NSPopUpButton()
+    private let shadersPopup = NSPopUpButton()
+    private let vsyncCheckbox = NSButton(checkboxWithTitle: "Limit frames to display refresh", target: nil, action: nil)
     private let colorWell = NSColorWell()
     private let sizeSlider = NSSlider(value: 5, minValue: 1, maxValue: 20, target: nil, action: nil)
     private let gapSlider = NSSlider(value: 1, minValue: 0, maxValue: 15, target: nil, action: nil)
@@ -76,6 +83,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
     private let statusLabel = NSTextField(labelWithString: "Choose settings, then launch.")
     private var resolutions: [Resolution] = []
     private var window: NSWindow!
+    private var graphicsWindow: NSPanel?
     private var gameProcess: Process?
 
     private var gameRoot: URL {
@@ -113,6 +121,11 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
             botCountPopup.addItem(withTitle: count == 0 ? "0 (solo)" : "\(count)")
         }
         difficultyPopup.addItems(withTitles: ["Easy", "Normal", "Hard", "Expert"])
+        texturePopup.addItems(withTitles: ["Low", "Medium", "High", "Very High"])
+        filteringPopup.addItems(withTitles: ["Bilinear", "Trilinear", "Anisotropic 2×", "Anisotropic 4×", "Anisotropic 8×", "Anisotropic 16×"])
+        antialiasingPopup.addItems(withTitles: ["Off", "2× MSAA", "4× MSAA"])
+        shadowsPopup.addItems(withTitles: ["Off", "Low", "Medium", "High"])
+        shadersPopup.addItems(withTitles: ["Low", "High"])
 
         let displayWidth = Int(CGDisplayPixelsWide(CGMainDisplayID()))
         let displayHeight = Int(CGDisplayPixelsHigh(CGMainDisplayID()))
@@ -149,6 +162,12 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         let resolutionIndex = resolutions.firstIndex(where: { $0.key == resolutionKey }) ?? 0
         resolutionPopup.selectItem(at: resolutionIndex)
         fullscreenCheckbox.state = defaults.bool(forKey: "fullscreen") ? .on : .off
+        texturePopup.selectItem(at: storedInteger("textureDetail", defaultValue: 2, range: 0...3))
+        filteringPopup.selectItem(at: storedInteger("textureFiltering", defaultValue: 1, range: 0...5))
+        antialiasingPopup.selectItem(at: storedInteger("antialiasing", defaultValue: 0, range: 0...2))
+        shadowsPopup.selectItem(at: storedInteger("shadows", defaultValue: 1, range: 0...3))
+        shadersPopup.selectItem(at: storedInteger("shaderDetail", defaultValue: 1, range: 0...1))
+        vsyncCheckbox.state = defaults.bool(forKey: "vsync") ? .on : .off
 
         sizeSlider.integerValue = storedInteger("size", defaultValue: 5, range: 1...20)
         gapSlider.integerValue = storedInteger("gap", defaultValue: 1, range: 0...15)
@@ -172,7 +191,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         for control in [mapPopup, botCountPopup, difficultyPopup, resolutionPopup, colorWell] {
             control.widthAnchor.constraint(equalToConstant: 359).isActive = true
         }
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 550, height: 710),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 550, height: 750),
                           styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
         window.title = "CS:GO Mac Launcher"
         window.center()
@@ -197,6 +216,9 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         stack.addArrangedSubview(row("Bot difficulty", control: difficultyPopup))
         stack.addArrangedSubview(row("Resolution", control: resolutionPopup))
         stack.addArrangedSubview(row("Display", control: fullscreenCheckbox))
+        graphicsButton.target = self
+        graphicsButton.action = #selector(showGraphicsSettings)
+        stack.addArrangedSubview(row("Graphics", control: graphicsButton))
 
         stack.addArrangedSubview(sectionLabel("Crosshair"))
         stack.addArrangedSubview(row("Color", control: colorWell))
@@ -255,6 +277,53 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         return control
     }
 
+    @objc private func showGraphicsSettings() {
+        if let graphicsWindow {
+            graphicsWindow.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let panel = NSPanel(contentRect: NSRect(x: 0, y: 0, width: 480, height: 320),
+                            styleMask: [.titled, .closable, .utilityWindow], backing: .buffered, defer: false)
+        panel.title = "Graphics Settings"
+        panel.isFloatingPanel = false
+        panel.hidesOnDeactivate = false
+        panel.isReleasedWhenClosed = false
+        panel.center()
+        let content = NSView()
+        panel.contentView = content
+        let stack = NSStackView()
+        stack.orientation = .vertical
+        stack.alignment = .leading
+        stack.spacing = 10
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        content.addSubview(stack)
+        NSLayoutConstraint.activate([
+            stack.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: 22),
+            stack.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -22),
+            stack.topAnchor.constraint(equalTo: content.topAnchor, constant: 20),
+        ])
+
+        for control in [texturePopup, filteringPopup, antialiasingPopup, shadowsPopup, shadersPopup] {
+            control.widthAnchor.constraint(equalToConstant: 280).isActive = true
+            control.target = self
+            control.action = #selector(settingsChanged)
+        }
+        stack.addArrangedSubview(row("Textures", control: texturePopup))
+        stack.addArrangedSubview(row("Filtering", control: filteringPopup))
+        stack.addArrangedSubview(row("Anti-aliasing", control: antialiasingPopup))
+        stack.addArrangedSubview(row("Shadows", control: shadowsPopup))
+        stack.addArrangedSubview(row("Shaders", control: shadersPopup))
+        vsyncCheckbox.target = self
+        vsyncCheckbox.action = #selector(settingsChanged)
+        stack.addArrangedSubview(row("VSync", control: vsyncCheckbox))
+        let note = NSTextField(labelWithString: "Changes apply the next time you launch the game.")
+        note.textColor = .secondaryLabelColor
+        stack.addArrangedSubview(note)
+        graphicsWindow = panel
+        panel.makeKeyAndOrderFront(nil)
+    }
+
     @objc private func settingsChanged() {
         refreshPreview()
         saveSettings()
@@ -280,6 +349,12 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         defaults.set(difficultyPopup.indexOfSelectedItem, forKey: "difficulty")
         defaults.set(resolutions[resolutionPopup.indexOfSelectedItem].key, forKey: "resolution")
         defaults.set(fullscreenCheckbox.state == .on, forKey: "fullscreen")
+        defaults.set(texturePopup.indexOfSelectedItem, forKey: "textureDetail")
+        defaults.set(filteringPopup.indexOfSelectedItem, forKey: "textureFiltering")
+        defaults.set(antialiasingPopup.indexOfSelectedItem, forKey: "antialiasing")
+        defaults.set(shadowsPopup.indexOfSelectedItem, forKey: "shadows")
+        defaults.set(shadersPopup.indexOfSelectedItem, forKey: "shaderDetail")
+        defaults.set(vsyncCheckbox.state == .on, forKey: "vsync")
         defaults.set(sizeSlider.integerValue, forKey: "size")
         defaults.set(gapSlider.integerValue, forKey: "gap")
         defaults.set(thicknessSlider.integerValue, forKey: "thickness")
@@ -311,6 +386,12 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         let green = Int((color.greenComponent * 255).rounded())
         let blue = Int((color.blueComponent * 255).rounded())
         let alpha = Int((Double(opacitySlider.integerValue) * 255 / 100).rounded())
+        let texturePicmip = [2, 1, 0, -1][texturePopup.indexOfSelectedItem]
+        let filtering = filteringPopup.indexOfSelectedItem
+        let anisotropy = [1, 1, 2, 4, 8, 16][filtering]
+        let antialiasing = [0, 2, 4][antialiasingPopup.indexOfSelectedItem]
+        let shadows = shadowsPopup.indexOfSelectedItem
+        let vsync = vsyncCheckbox.state == .on ? 1 : 0
         let config = """
         // Generated by CS:GO Mac Launcher. Recreated each time the game starts.
         bot_quota_mode normal
@@ -326,6 +407,16 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
         cg_crosshair_g \(green)
         cg_crosshair_b \(blue)
         cg_crosshair_alpha \(alpha)
+        mat_picmip \(texturePicmip)
+        mat_trilinear \(filtering == 1 ? 1 : 0)
+        mat_forceaniso \(anisotropy)
+        mat_antialias \(antialiasing)
+        mat_aaquality 0
+        r_shadows \(shadows == 0 ? 0 : 1)
+        r_shadowrendertotexture \(shadows >= 2 ? 1 : 0)
+        r_flashlightdepthtexture \(shadows >= 3 ? 1 : 0)
+        mat_reducefillrate \(shadersPopup.indexOfSelectedItem == 0 ? 1 : 0)
+        mat_vsync \(vsync)
 
         """
         let configURL = gameRoot.appendingPathComponent("csgo/cfg/mac_launcher.cfg")
@@ -344,15 +435,21 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
             process.arguments = ["-arm64", game.path, "-insecure", "-novid",
                                  fullscreenCheckbox.state == .on ? "-fullscreen" : "-windowed",
                                  "-w", "\(resolution.width)", "-h", "\(resolution.height)",
+                                 "-mat_antialias", "\(antialiasing)", "-mat_aaquality", "0",
+                                 "-mat_vsync", "\(vsync)",
                                  "+map", map, "+exec", "mac_launcher.cfg"]
             process.terminationHandler = { [weak self] finished in
                 try? logHandle.close()
                 DispatchQueue.main.async {
                     self?.gameProcess = nil
                     self?.launchButton.isEnabled = true
-                    self?.statusLabel.stringValue = finished.terminationStatus == 0
-                        ? "Game closed."
-                        : "Game exited (status \(finished.terminationStatus)); see launcher-game.log."
+                    if finished.terminationReason == .uncaughtSignal {
+                        self?.statusLabel.stringValue = "Game crashed (signal \(finished.terminationStatus)); see DiagnosticReports."
+                    } else if finished.terminationStatus == 0 {
+                        self?.statusLabel.stringValue = "Game closed."
+                    } else {
+                        self?.statusLabel.stringValue = "Game exited (status \(finished.terminationStatus)); see launcher-game.log."
+                    }
                     NSApp.unhide(nil)
                     NSApp.activate(ignoringOtherApps: true)
                 }
@@ -361,6 +458,7 @@ final class LauncherApp: NSObject, NSApplicationDelegate {
             gameProcess = process
             launchButton.isEnabled = false
             statusLabel.stringValue = "Game running on \(map)."
+            graphicsWindow?.orderOut(nil)
             NSApp.hide(nil)
         } catch {
             showError("Could not launch the game: \(error.localizedDescription)")

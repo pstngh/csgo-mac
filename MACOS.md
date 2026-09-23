@@ -90,10 +90,14 @@ Build the launcher app in a playable game directory:
 
 Open `CSGO Launcher.app` in that directory to choose an installed map, bot count
 and difficulty, windowed or fullscreen resolution, and crosshair color, size,
-gap, thickness, opacity, dot, and outline. The launcher previews the crosshair,
-saves the choices, writes `csgo/cfg/mac_launcher.cfg`, and starts the game with
-that config after the map loads. Game output goes to `launcher-game.log` for
-troubleshooting. It keeps the original gameplay bindings and
+gap, thickness, opacity, dot, and outline. Graphics Settings offers texture
+detail, texture filtering, anti-aliasing, shadows, shader detail, and VSync.
+Graphics choices apply on the next launch; anti-aliasing and VSync are also
+passed at startup so the video mode uses them immediately. The launcher previews
+the crosshair, saves the choices, writes `csgo/cfg/mac_launcher.cfg`, and starts
+the game with that config after the map loads. Game output goes to
+`launcher-game.log`. If the game crashes, macOS writes a report in
+`~/Library/Logs/DiagnosticReports`. The launcher keeps the original gameplay bindings and
 free-for-all defaults. The game directory in this checkout is at
 `/Users/pstn/Documents/Games/csgo`; its former sibling `../game` is a symlink
 so the existing CMake build still updates the installed game.
