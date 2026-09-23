@@ -229,11 +229,9 @@ void CVPhysicsVirtualMeshWriter::UnpackCompactLedgeFromHull( IVP_Compact_Ledge *
 	pLedge->n_triangles = pHull->triangleCount;
 	pLedge->has_chilren_flag = isVirtualLedge ? IVP_TRUE : IVP_FALSE;
 
-	// Make the offset -pLedge so the result is a NULL ledgetree node - we haven't needed to create one of these as of yet
-	//lwss - x64 fixes
-	//pLedge->ledgetree_node_offset = -((int)pLedge);
-	pLedge->ledgetree_node_offset = -((intptr_t)pLedge);
-	//lwss end
+	// Virtual mesh hulls have no ledgetree node. The offset is only 32 bits,
+	// so negating a 64-bit pointer cannot produce a null node address.
+	pLedge->ledgetree_node_offset = 0;
 
 	// keep track of which triangle edge referenced this edge (so the next one can swap the order and point to the first one)
 	int forwardEdgeIndex[255];

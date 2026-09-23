@@ -78,32 +78,16 @@ void IVP_Mindist_Recursive::do_impact(){
 
 		const IVP_Compact_Ledgetree_Node *n0 = l0->get_ledgetree_node();
 		const IVP_Compact_Ledgetree_Node *n1 = l1->get_ledgetree_node();
-		//lwss hack - add null checks here :(
-		if( !n0 && !n1 )
-        {
-            // if they are both null just do normal I guess
-            // TODO: what is normal? this is not used really, do we need one of the recursive ones instead?
-            recursive_status = IVP_MR_NORMAL;
-        }
-		else if( n0 && n1 )
-        {
-		    // ORIGINAL CHECKS
-            if ( n0->radius > n1->radius){
-                recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
-            }else{
-                recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
-            }
-        }
+		// A virtual mesh hull has no ledgetree node; its surface manager
+		// expands it into terminal ledges when it is the recursive side.
+		if (!n0)
+			recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
+		else if (!n1)
+			recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
+		else if (n0->radius > n1->radius)
+			recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
 		else
-        {
-            // if the 1st one is null, then we can assume the 2nd one is bigger?
-            if( !n0 )
-                recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
-            // if the 2nd one is null, we can assume first one is bigger.
-            if( !n1 )
-                recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
-		}
-		//lwss end
+			recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
 	    }
 	    break;
 	default: CORE;
@@ -160,27 +144,16 @@ void IVP_Mindist_Recursive::exact_mindist_went_invalid(IVP_Mindist_Manager *mm){
     }else {
         const IVP_Compact_Ledgetree_Node *n0 = l0->get_ledgetree_node();
         const IVP_Compact_Ledgetree_Node *n1 = l1->get_ledgetree_node();
-        //lwss hack - add null checks here :(
-        if (!n0 && !n1) {
-            // if they are both null just do normal I guess
-            // TODO: what is normal? this is not used really, do we need one of the recursive ones instead?
-            recursive_status = IVP_MR_NORMAL;
-        } else if (n0 && n1) {
-            // ORIGINAL CHECKS
-            if (n0->radius > n1->radius) {
-                recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
-            } else {
-                recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
-            }
-        } else {
-            // if the 1st one is null, then we can assume the 2nd one is bigger?
-            if (!n0)
-                recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
-            // if the 2nd one is null, we can assume first one is bigger.
-            if (!n1)
-                recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
-        }
-        //lwss end
+        // A virtual mesh hull has no ledgetree node; its surface manager
+        // expands it into terminal ledges when it is the recursive side.
+        if (!n0)
+            recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
+        else if (!n1)
+            recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
+        else if (n0->radius > n1->radius)
+            recursive_status = IVP_MR_FIRST_SYNAPSE_RECURSIVE;
+        else
+            recursive_status = IVP_MR_SECOND_SYNAPSE_RECURSIVE;
     }
     mm->remove_exact_mindist(this);
     //mindists.ensure_capacity(16);

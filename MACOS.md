@@ -145,3 +145,7 @@ they cannot replace the fixed spawn loadout after it is granted.
 ## Status
 
 The port is experimental. On an Apple Silicon Mac, the native client has loaded `de_dust2`, shown the RocketUI team menu, joined a local match, and run combat with bots without Steam. Some legacy assets and features are still incomplete. This client build does not support headless map loading; without a display, SDL/OpenGL initialization fails.
+
+Virtual mesh collision hulls use a zero node offset to represent the absence of
+a ledge tree. The prior code truncated a 64-bit pointer into that 32-bit field,
+causing a SIGBUS in physics simulation on Apple Silicon.

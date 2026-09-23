@@ -167,8 +167,13 @@ public:
     inline       IVP_Compact_Triangle *get_first_triangle()       { return (IVP_Compact_Triangle *)(this+1); };
     inline IVP_BOOL is_terminal() const { return (IVP_BOOL)(has_chilren_flag == 0); };
 
-    // get corresponding ledge tree node for recursive compace ledges only ( no grids )
-    inline const IVP_Compact_Ledgetree_Node *get_ledgetree_node() const { IVP_ASSERT( !is_terminal() ); return ( IVP_Compact_Ledgetree_Node *)( ((char *)this) + ledgetree_node_offset); };
+    // Get the node for a recursive ledge. Virtual mesh hulls use offset zero
+    // because their surface manager expands them without a ledge tree.
+    inline const IVP_Compact_Ledgetree_Node *get_ledgetree_node() const {
+        IVP_ASSERT( !is_terminal() );
+        if (ledgetree_node_offset == 0) return NULL;
+        return (const IVP_Compact_Ledgetree_Node *)( ((const char *)this) + ledgetree_node_offset);
+    };
     
     inline int get_n_triangles() const { return n_triangles; };
     
