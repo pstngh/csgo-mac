@@ -2563,6 +2563,118 @@ void CCSPlayer::KickBack( float fAngle, float fMagnitude )
 	SetViewPunchAngle(viewPunch);
 }
 
+#if defined( USE_MAC_PRESET )
+namespace
+{
+float DecayOpenMoHAAWeaponKickAxis( float kick, float recenter, float minDecay, float maxDecay, float frameTime )
+{
+	if ( kick == 0.0f )
+		return 0.0f;
+
+	float decay = clamp( kick * recenter, -maxDecay, maxDecay );
+	if ( fabsf( decay ) < minDecay )
+		decay = kick > 0.0f ? minDecay : -minDecay;
+
+	const float result = kick - decay * frameTime;
+	if ( ( kick > 0.0f && result < 0.0f ) || ( kick < 0.0f && result > 0.0f ) )
+		return 0.0f;
+
+	return result;
+}
+}
+
+void CCSPlayer::ApplyOpenMoHAAAWPViewKick()
+{
+	QAngle kick = m_angOpenMoHAAWeaponKick.Get();
+	float scatterPitchMax;
+
+	if ( GetTeamNumber() == TEAM_TERRORIST )
+	{
+		// OpenMoHAA's Axis Kar98 sniper: a fixed five-degree rise with
+		// yaw linked to the accumulated pitch (the TIKI "V" pattern).
+		kick[PITCH] += -5.0f;
+		kick[YAW] += kick[PITCH] * 0.07f;
+		scatterPitchMax = 12.0f;
+	}
+	else
+	{
+		// OpenMoHAA's Allied Springfield sniper: 4.5-5 degrees of rise
+		// and one degree of independent horizontal variation.
+		kick[PITCH] += SharedRandomFloat( "OpenMoHAAAWPPitch", -5.0f, -4.5f );
+		kick[YAW] += SharedRandomFloat( "OpenMoHAAAWPYaw", -1.0f, 1.0f );
+		scatterPitchMax = 8.0f;
+	}
+
+	// Preserve OpenMoHAA's loss-of-control scatter and the sniper caps.
+	if ( kick[PITCH] < scatterPitchMax )
+	{
+		if ( kick[PITCH] <= -scatterPitchMax )
+		{
+			kick[PITCH] += SharedRandomFloat( "OpenMoHAAAWPScatterPitchLow", -0.25f, 0.25f );
+			kick[YAW] += SharedRandomFloat( "OpenMoHAAAWPScatterYawLow", -0.25f, 0.25f );
+		}
+	}
+	else
+	{
+		kick[PITCH] -= SharedRandomFloat( "OpenMoHAAAWPScatterPitchHigh", -0.25f, 0.25f );
+		kick[YAW] += SharedRandomFloat( "OpenMoHAAAWPScatterYawHigh", -3.5f, 3.5f );
+	}
+
+	kick[PITCH] = clamp( kick[PITCH], -8.0f, 8.0f );
+	kick[YAW] = clamp( kick[YAW], -8.0f, 8.0f );
+	kick[ROLL] = 0.0f;
+	m_angOpenMoHAAWeaponKick = kick;
+}
+
+void CCSPlayer::ApplyOpenMoHAADamageViewKick( const Vector &damageDirection, float damage )
+{
+	Vector direction = damageDirection;
+	if ( VectorNormalize( direction ) == 0.0f || damage <= 0.0f )
+		return;
+
+	// OpenMoHAA builds this orientation from the player's level yaw rather
+	// than view pitch, then subtracts damage_angles from the rendered view.
+	Vector forward, right, up;
+	AngleVectors( QAngle( 0.0f, EyeAngles()[YAW], 0.0f ), &forward, &right, &up );
+
+	QAngle kick = m_angOpenMoHAADamageKick.Get();
+	kick[PITCH] += DotProduct( direction, forward ) * damage * 0.3f;
+	kick[YAW] -= DotProduct( direction, right ) * damage * 0.3f;
+	kick[ROLL] -= DotProduct( direction, up ) * damage * 0.15f;
+
+	kick[PITCH] = clamp( kick[PITCH], -30.0f, 30.0f );
+	kick[YAW] = clamp( kick[YAW], -30.0f, 30.0f );
+	kick[ROLL] = clamp( kick[ROLL], -25.0f, 25.0f );
+	m_angOpenMoHAADamageKick = kick;
+}
+
+void CCSPlayer::DecayOpenMoHAAViewKicks( float frameTime )
+{
+	if ( !IsAlive() )
+	{
+		m_angOpenMoHAAWeaponKick = vec3_angle;
+		m_angOpenMoHAADamageKick = vec3_angle;
+		return;
+	}
+
+	QAngle weaponKick = m_angOpenMoHAAWeaponKick.Get();
+	const float recenter = GetTeamNumber() == TEAM_TERRORIST ? 0.5f : 6.0f;
+	weaponKick[PITCH] = DecayOpenMoHAAWeaponKickAxis( weaponKick[PITCH], recenter, 12.0f, 25.0f, frameTime );
+	weaponKick[YAW] = DecayOpenMoHAAWeaponKickAxis( weaponKick[YAW], recenter, 12.0f, 25.0f, frameTime );
+	weaponKick[ROLL] = 0.0f;
+	m_angOpenMoHAAWeaponKick = weaponKick;
+
+	// DamageFeedback multiplies OpenMoHAA's damage angles by 0.8 every
+	// default 20 Hz server frame. Express that decay independently of the
+	// Source tick rate so the return timing remains the same.
+	QAngle damageKick = m_angOpenMoHAADamageKick.Get();
+	damageKick *= powf( 0.8f, frameTime * 20.0f );
+	if ( damageKick.LengthSqr() < 0.0001f )
+		damageKick = vec3_angle;
+	m_angOpenMoHAADamageKick = damageKick;
+}
+#endif
+
 
 QAngle CCSPlayer::GetAimPunchAngle()
 {

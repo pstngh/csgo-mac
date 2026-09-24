@@ -418,6 +418,10 @@ BEGIN_SEND_TABLE_NOBASE( CCSPlayer, DT_CSLocalPlayerExclusive )
 	SendPropFloat   (SENDINFO_VECTORELEM(m_vecOrigin, 2), -1, SPROP_NOSCALE|SPROP_CHANGES_OFTEN, 0.0f, HIGH_DEFAULT, SendProxy_OriginZ, SENDPROP_LOCALPLAYER_ORIGINZ_PRIORITY ),
 
 	SendPropFloat( SENDINFO( m_flStamina ), 14, 0, 0, 100.0f  ),
+#if defined( USE_MAC_PRESET )
+	SendPropVector( SENDINFO( m_angOpenMoHAAWeaponKick ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+	SendPropVector( SENDINFO( m_angOpenMoHAADamageKick ), -1, SPROP_NOSCALE | SPROP_CHANGES_OFTEN ),
+#endif
 	SendPropInt( SENDINFO( m_iDirection ), 1, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_iShotsFired ), 8, SPROP_UNSIGNED ),
 	SendPropInt( SENDINFO( m_nNumFastDucks ), 8, SPROP_UNSIGNED ), // unused
@@ -637,6 +641,8 @@ CCSPlayer::CCSPlayer()
 {
 #if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+	m_angOpenMoHAAWeaponKick.Init();
+	m_angOpenMoHAADamageKick.Init();
 #endif
 	m_PlayerAnimState = CreatePlayerAnimState( this, this, LEGANIM_9WAY, true );
 	m_PlayerAnimStateCSGO = CreateCSGOPlayerAnimstate( this );
@@ -1338,6 +1344,8 @@ void CCSPlayer::Spawn()
 {
 #if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+	m_angOpenMoHAAWeaponKick = vec3_angle;
+	m_angOpenMoHAADamageKick = vec3_angle;
 #endif
 	m_RateLimitLastCommandTimes.Purge();
 
@@ -2605,6 +2613,8 @@ void CCSPlayer::Event_Killed( const CTakeDamageInfo &info )
 {
 #if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+	m_angOpenMoHAAWeaponKick = vec3_angle;
+	m_angOpenMoHAADamageKick = vec3_angle;
 #endif
 	SetKilledTime( gpGlobals->curtime );
 
@@ -5223,6 +5233,16 @@ int CCSPlayer::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	if ( info.GetDamage() <= 0 )
 		return 0;
 
+#if defined( USE_MAC_PRESET )
+	if ( bDamageIsFromOpponent )
+	{
+		Vector damageDirection = info.GetDamageForce();
+		if ( damageDirection.LengthSqr() <= 0.0001f )
+			damageDirection = WorldSpaceCenter() - pAttacker->WorldSpaceCenter();
+		ApplyOpenMoHAADamageViewKick( damageDirection, info.GetDamage() );
+	}
+#endif
+
 	CSingleUserAndReplayRecipientFilter user( this );
 	user.MakeReliable();
 
@@ -5528,8 +5548,10 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 	float flDamage = info.GetDamage();
 
+#if !defined( USE_MAC_PRESET )
 	QAngle punchAngle;
 	float flAng;
+#endif
 	
 	bool hitByBullet = false;
 	bool hitByGrenadeProjectile = false;
@@ -5561,6 +5583,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 		if ( ArmorValue() > 0 )
 			 bShouldBleed = false;
 
+#if !defined( USE_MAC_PRESET )
 			if ( bShouldBleed == true )
 			{
 				// punch view if we have no armor
@@ -5572,6 +5595,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 				SetAimPunchAngle( punchAngle );
 			}
+#endif
 		}
 		else
 		{
@@ -5604,6 +5628,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				flDamage *= 4;
 				flDamage *= flHeadDamageScale;
 
+#if !defined( USE_MAC_PRESET )
 				if ( !m_bHasHelmet )
 				{
 					punchAngle = GetRawAimPunchAngle();
@@ -5623,6 +5648,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 
 					SetAimPunchAngle( punchAngle );
 				}
+#endif
 
 				bHeadShot = true;
 
@@ -5633,6 +5659,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				flDamage *= 1.0;
 				flDamage *= flBodyDamageScale;
 
+#if !defined( USE_MAC_PRESET )
 				if ( ArmorValue() <= 0 )
 					flAng = -0.1;
 				else
@@ -5647,6 +5674,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					punchAngle.x = mp_flinch_punch_scale.GetFloat() * -4;
 
 				SetAimPunchAngle( punchAngle );
+#endif
 
 				break;
 
@@ -5655,6 +5683,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 				flDamage *= 1.25;
 				flDamage *= flBodyDamageScale;
 
+#if !defined( USE_MAC_PRESET )
 				if ( ArmorValue() <= 0 )
 					flAng = -0.1;
 				else
@@ -5669,6 +5698,7 @@ void CCSPlayer::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, 
 					punchAngle.x = mp_flinch_punch_scale.GetFloat() * -4;
 
 				SetAimPunchAngle( punchAngle );
+#endif
 
 
 				break;

@@ -852,6 +852,9 @@ void CCSGameMovement::DecayAimPunchAngle( void )
 	// save off the new values
 	m_pCSPlayer->m_Local.m_aimPunchAngle = punchAngle;
 	m_pCSPlayer->m_Local.m_aimPunchAngleVel = punchAngleVel;
+#if defined( USE_MAC_PRESET )
+	m_pCSPlayer->DecayOpenMoHAAViewKicks( TICK_INTERVAL );
+#endif
 }
 
 void CCSGameMovement::HandleDuckingSpeedCrop( float duckFraction )

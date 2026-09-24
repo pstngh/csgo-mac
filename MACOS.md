@@ -123,10 +123,13 @@ free-for-all deathmatch, with respawns enabled and every player a valid target.
 Set `mp_teammates_are_enemies 0` in the console for team deathmatch. Weapon
 inaccuracy uses each weapon's first-shot standing or crouching baseline while
 running, jumping, climbing, or spraying. Shots retain their normal random
-first-shot spread. Recoil remains visible and affects aim, but each automatic
-shot samples a different recoil table entry instead of following a fixed spray
-sequence. The view tracks recoil so the crosshair remains centered on the
-recoil-adjusted shot direction.
+first-shot spread. Automatic-weapon recoil remains visible and affects aim,
+but each shot samples a different recoil table entry instead of following a
+fixed spray sequence. The view tracks recoil so the crosshair remains centered
+on the recoil-adjusted shot direction. The AWP instead uses OpenMoHAA's
+camera-only sniper kick: CTs use the Allied Springfield profile and Ts use the
+Axis scoped Kar98 profile. Enemy damage also applies OpenMoHAA's directional
+pitch, yaw, and roll kick with its original damage scaling and decay timing.
 
 For the local listen-server host, the preset keeps `sv_cheats` enabled, god mode active, hit-tagging slowdown disabled, the account at the server's maximum balance, and the active weapon's clip full. In classic and deathmatch games, each CT spawn gives a USP-S, silenced M4A1-S and AWP; each T spawn gives a USP-S, AK-47 and AWP. Other players on either team also spawn with a USP-S by default. The AWP is an extra primary weapon and has a separate scroll-wheel position. While alive, the host can open the buy menu and buy anywhere throughout the round, regardless of buy zones, buy time or mode-specific buy locks. Ordinary inventory limits still apply to individual items. Bots on the local server retain vest armor but receive no helmet protection. These server-side benefits do not override a remote server's rules or apply to other human players. A remote server may also impose its own mouse-pitch limit. The preset is compiled into the build rather than stored in `config.cfg`; editing that file will not change the locked values.
 

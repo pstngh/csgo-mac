@@ -393,6 +393,11 @@ public:
 	void KickBack(
 		float fAngle,
 		float fMagnitude );
+#if defined( USE_MAC_PRESET )
+	void ApplyOpenMoHAAAWPViewKick();
+	void ApplyOpenMoHAADamageViewKick( const Vector &damageDirection, float damage );
+	void DecayOpenMoHAAViewKicks( float frameTime );
+#endif
 
 	void GetBulletTypeParameters( 
 		int iBulletType, 
@@ -1023,6 +1028,8 @@ public:
 	CNetworkVar( float, m_flStamina );
 #if defined( USE_MAC_PRESET )
 	CNetworkVar( float, m_flLeanAngle );
+	CNetworkQAngle( m_angOpenMoHAAWeaponKick );
+	CNetworkQAngle( m_angOpenMoHAADamageKick );
 #endif
 	CNetworkVar( int, m_iDirection );	// The current lateral kicking direction; 1 = right,  0 = left
 	CNetworkVar( int, m_iShotsFired );	// number of shots fired recently (seems inconsistent, based on specific weapons incrementing this value)

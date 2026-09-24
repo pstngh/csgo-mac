@@ -3929,6 +3929,16 @@ void CWeaponCSBase::Recoil( CSWeaponMode weaponMode )
     if ( !pPlayer )
         return;
 
+#if defined( USE_MAC_PRESET )
+	// OpenMoHAA sniper recoil is a camera kick, not CS:GO's aim-punch
+	// velocity. Keeping it separate also lets its original recenter curve run.
+	if ( GetCSWeaponID() == WEAPON_AWP )
+	{
+		pPlayer->ApplyOpenMoHAAAWPViewKick();
+		return;
+	}
+#endif
+
     //update: Special Thanks to PiMoNFeeD for noticing I missed an if-statement here with the vfunc IsFullAuto().
     // The recoil was a bit wonky.
     if( !IsFullAuto() )

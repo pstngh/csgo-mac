@@ -542,6 +542,8 @@ BEGIN_PREDICTION_DATA( C_CSPlayer )
 	DEFINE_PRED_FIELD_TOL( m_flStamina, FIELD_FLOAT, FTYPEDESC_INSENDTABLE, 0.1f ),
 #if defined( USE_MAC_PRESET )
 	DEFINE_PRED_FIELD( m_flLeanAngle, FIELD_FLOAT, FTYPEDESC_INSENDTABLE ),
+	DEFINE_PRED_FIELD_TOL( m_angOpenMoHAAWeaponKick, FIELD_VECTOR, FTYPEDESC_INSENDTABLE, 0.01f ),
+	DEFINE_PRED_FIELD_TOL( m_angOpenMoHAADamageKick, FIELD_VECTOR, FTYPEDESC_INSENDTABLE, 0.01f ),
 #endif
 	DEFINE_PRED_FIELD( m_flCycle, FIELD_FLOAT, FTYPEDESC_OVERRIDE | FTYPEDESC_PRIVATE | FTYPEDESC_NOERRORCHECK ),
 	DEFINE_PRED_FIELD( m_iShotsFired, FIELD_INTEGER, FTYPEDESC_INSENDTABLE ),   
@@ -1466,6 +1468,10 @@ BEGIN_RECV_TABLE_NOBASE( C_CSPlayer, DT_CSLocalPlayerExclusive )
 	/////	
 	
 	RecvPropFloat( RECVINFO(m_flStamina ) ),
+#if defined( USE_MAC_PRESET )
+	RecvPropVector( RECVINFO( m_angOpenMoHAAWeaponKick ) ),
+	RecvPropVector( RECVINFO( m_angOpenMoHAADamageKick ) ),
+#endif
 	RecvPropInt( RECVINFO( m_iDirection ) ),
 	RecvPropInt( RECVINFO( m_iShotsFired ) ),
 	RecvPropInt( RECVINFO( m_nNumFastDucks ) ),
@@ -1643,6 +1649,8 @@ C_CSPlayer::C_CSPlayer() :
 	m_flThirdpersonRecoil = 0;
 #if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+	m_angOpenMoHAAWeaponKick.Init();
+	m_angOpenMoHAADamageKick.Init();
 #endif
 
 	m_angEyeAngles.Init();
@@ -3642,6 +3650,8 @@ void C_CSPlayer::Spawn( void )
 	m_flLastSpawnTimeIndex = gpGlobals->curtime;
 #if defined( USE_MAC_PRESET )
 	m_flLeanAngle = 0.0f;
+	m_angOpenMoHAAWeaponKick = vec3_angle;
+	m_angOpenMoHAADamageKick = vec3_angle;
 #endif
 
 #if defined( USE_PLAYER_ATTRIBUTE_MANAGER )
@@ -4251,6 +4261,9 @@ void C_CSPlayer::CalcView( Vector &eyeOrigin, QAngle &eyeAngles, float &zNear, f
 	}
 
 #if defined( USE_MAC_PRESET )
+	if ( IsLocalPlayer() && IsAlive() && !::input->CAM_IsThirdPerson() )
+		eyeAngles += m_angOpenMoHAAWeaponKick.Get() + m_angOpenMoHAADamageKick.Get();
+
 	if ( IsLocalPlayer() && IsAlive() && !::input->CAM_IsThirdPerson() && m_flLeanAngle != 0.0f )
 	{
 		const Vector desired = eyeOrigin + CS_AALeanEyeOffset( eyeAngles, m_flLeanAngle );
