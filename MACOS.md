@@ -144,7 +144,9 @@ its native Cyrex finish. Chickens are suppressed on local maps. Warmup, the
 round-start freeze countdown, the round-restart delay, and timed spawn immunity
 are disabled. The loading screen's placeholder text is hidden. Once a map
 finishes loading, the local player joins CT and spawns automatically without
-opening the team menu. Bots may join and spawn before the local player.
+opening the team menu. The pause menu's **Choose Team** action remains available
+for manually joining CT, T, or Spectator. Bots may join and spawn before the
+local player.
 
 Deathmatch's automatic random buy and automatic rebuy are disabled so they
 cannot replace the fixed spawn loadout after it is granted.
