@@ -6409,13 +6409,11 @@ static bool Helper_CheckFieldAppliesToTeam( char const *szField, int nTeam )
 		if ( m_bLoadingRoundBackupData )
 			return false;
 
-		float flGameCommencingDelay = 0.5f;
-#if defined( USE_MAC_PRESET )
-		// A local preset game has no staging period. Preserve the normal
-		// Game_Commencing transition, but finish it on the next server tick.
-		if ( !engine->IsDedicatedServer() )
-			flGameCommencingDelay = TICK_INTERVAL;
-#endif
+		// Keep the engine's short synchronization window between PreRestartRound
+		// and RestartRound. Collapsing it to one tick can catch an auto-joining
+		// local player mid-spawn. This is not warmup: the local preset keeps
+		// m_bWarmupPeriod disabled when Game_Commencing is processed below.
+		const float flGameCommencingDelay = 0.5f;
 
 		// Run this check differently in queue matchmaking mode
 		if ( IsQueuedMatchmaking() )
