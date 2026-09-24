@@ -29,6 +29,8 @@ IVP_Hull_Manager_Base::~IVP_Hull_Manager_Base(){
 void IVP_Hull_Manager::delete_hull_manager(){
     while ( sorted_synapses.has_elements() ){
 	IVP_Listener_Hull *syn = (IVP_Listener_Hull *)sorted_synapses.find_min_elem();
+	if (!syn)
+	    break;
 	syn->hull_manager_is_going_to_be_deleted_event((IVP_Hull_Manager *)this);
     }
 }
@@ -40,18 +42,37 @@ void   IVP_Listener_Hull::hull_manager_is_reset(IVP_FLOAT /*dt*/, IVP_FLOAT /*ce
 void IVP_Hull_Manager::reset_times(){
     IVP_FLOAT mt = - hull_value_last_vpsi;
     IVP_FLOAT mc = - hull_center_value_last_vpsi;
+
+    // Recover an individual hull manager if bad geometry produced a NaN.
+    // Propagating it into the min-list breaks its ordering and corrupts the
+    // free list on the next update.
+    IVP_BOOL invalid_hull_time = (IVP_BOOL)(mt != mt || mt > P_FLOAT_MAX || mt < -P_FLOAT_MAX ||
+					 mc != mc || mc > P_FLOAT_MAX || mc < -P_FLOAT_MAX ||
+					 hull_value_next_psi != hull_value_next_psi ||
+					 hull_value_next_psi > P_FLOAT_MAX ||
+					 hull_value_next_psi < -P_FLOAT_MAX);
+    if (invalid_hull_time){
+	    mt = 0.0f;
+	    mc = 0.0f;
+    }
     IVP_U_Min_List_Enumerator mle(&sorted_synapses);
     
     while ( IVP_U_Min_List_Element *el = mle.get_next_element_header()){
 	IVP_Listener_Hull *lh = (IVP_Listener_Hull *)el->element;
-	el->value += mt;
+	if (invalid_hull_time || el->value != el->value)
+	    el->value = 0.0f;
+	else
+	    el->value += mt;
 	lh->hull_manager_is_reset(mt,mc);
 	
     }
-    sorted_synapses.min_value += mt;
+    if (invalid_hull_time)
+	sorted_synapses.min_value = sorted_synapses.has_elements() ? 0.0f : IVP_U_MINLIST_MAXVALUE;
+    else
+	sorted_synapses.min_value += mt;
     hull_value_last_vpsi = 0.0f;
     hull_center_value_last_vpsi = 0.0f;
-    hull_value_next_psi += mt;
+    hull_value_next_psi = invalid_hull_time ? 0.0f : hull_value_next_psi + mt;
 }
 
 void IVP_Hull_Manager::reset_time(IVP_Time offset){

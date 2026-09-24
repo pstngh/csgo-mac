@@ -48,30 +48,28 @@ public:
     ~IVP_U_Min_List();
     
     IVP_U_MINLIST_INDEX add(void *elem,IVP_U_MINLIST_FIXED_POINT value); // returns an index
+
+    IVP_BOOL contains(IVP_U_MINLIST_INDEX index, const void *elem) const {
+	return (IVP_BOOL)(index < malloced_size && elems[index].element == elem);
+    }
     
     void *find_min_elem(){
 		IVP_ASSERT( first_element != IVP_U_MINLIST_UNUSED);
-		//lwss hack - this happens when spawning on overpass
-		if( first_element == IVP_U_MINLIST_UNUSED )
-        {
-		    // first_element is fk'd up. Go ahead and return the first element since there is only 1
-		    if( counter == 1 )
-            {
-		        return elems[0].element;
-            }
-		    fprintf(stderr, "ivu_min_list - first_element was unused!!\n");
-            return NULL;
-        }
-		//lwss end
+		if (first_element == IVP_U_MINLIST_UNUSED || first_element >= malloced_size ||
+		    elems[first_element].element == NULL)
+		{
+		    return NULL;
+		}
 		return elems[first_element].element;
 	};
 
     IVP_BOOL has_elements(){
-	return (IVP_BOOL) (counter>0);
+	return (IVP_BOOL)(first_element != IVP_U_MINLIST_UNUSED &&
+		first_element < malloced_size && elems[first_element].element != NULL);
     }
 
     IVP_U_MINLIST_FIXED_POINT find_min_value(){
-		return min_value;
+		return has_elements() ? min_value : IVP_U_MINLIST_MAXVALUE;
 	}
 
     void prefetch0_minlist(){
@@ -82,9 +80,11 @@ public:
 
     void prefetch1_minlist(){
         IVP_IF_PREFETCH_ENABLED(IVP_TRUE){
-	    IVP_PREFETCH_BLOCK( &elems[first_element], 64 ); // get at least 64 bytes
+	    if (first_element != IVP_U_MINLIST_UNUSED && first_element < malloced_size)
+		IVP_PREFETCH_BLOCK( &elems[first_element], 64 ); // get at least 64 bytes
 #ifdef IVP_U_MINLIST_USELONG
-	    IVP_PREFETCH( &elems[first_long],0 );
+	    if (first_long != IVP_U_MINLIST_UNUSED && first_long < malloced_size)
+		IVP_PREFETCH( &elems[first_long],0 );
 #endif
 	}
     }
@@ -99,15 +99,17 @@ class IVP_U_Min_List_Enumerator {
 public:
     IVP_U_Min_List_Enumerator( IVP_U_Min_List *mh){
 	min_list = mh;
-	loop_elem = mh->first_element;
+	loop_elem = mh->has_elements() ? mh->first_element : IVP_U_MINLIST_UNUSED;
     }
     
     void *get_next_element(){
 	void *e;
-	if (loop_elem != IVP_U_MINLIST_UNUSED) {
+	if (loop_elem != IVP_U_MINLIST_UNUSED && loop_elem < min_list->malloced_size &&
+	    min_list->elems[loop_elem].element != NULL) {
 	    e = min_list->elems[loop_elem].element;
 	    loop_elem = min_list->elems[loop_elem].next;
 	}else{
+	    loop_elem = IVP_U_MINLIST_UNUSED;
 	    e = NULL;
 	}
 	return e;
@@ -115,10 +117,12 @@ public:
 
     IVP_U_Min_List_Element *get_next_element_header(){
 	IVP_U_Min_List_Element *el; 
-	if (loop_elem != IVP_U_MINLIST_UNUSED) {
+	if (loop_elem != IVP_U_MINLIST_UNUSED && loop_elem < min_list->malloced_size &&
+	    min_list->elems[loop_elem].element != NULL) {
 	    el = &min_list->elems[loop_elem];
 	    loop_elem = el->next;
 	}else{
+	    loop_elem = IVP_U_MINLIST_UNUSED;
 	    el = (IVP_U_Min_List_Element *)NULL;
 	}
 	return el;
@@ -127,12 +131,14 @@ public:
     
     void *get_next_element_lt(IVP_FLOAT max_limit){
 	void *e;
-	if (loop_elem != IVP_U_MINLIST_UNUSED) {
+	if (loop_elem != IVP_U_MINLIST_UNUSED && loop_elem < min_list->malloced_size &&
+	    min_list->elems[loop_elem].element != NULL) {
 	    IVP_U_Min_List_Element *el = &min_list->elems[loop_elem]; 
 	    if (el->value >= max_limit) return NULL;
 	    loop_elem = min_list->elems[loop_elem].next;
 	    e = el->element;
 	}else{
+	    loop_elem = IVP_U_MINLIST_UNUSED;
 	    e = NULL;
 	}
 	return e;

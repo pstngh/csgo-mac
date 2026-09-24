@@ -21,6 +21,13 @@ IVP_U_Min_List::IVP_U_Min_List(int start_size)
 	for( ; i < malloced_size; i++ )
 	{
 		elems[i].next = i+1;
+		elems[i].prev = IVP_U_MINLIST_UNUSED;
+		elems[i].element = NULL;
+		elems[i].value = IVP_U_MINLIST_MAXVALUE;
+#ifdef IVP_U_MINLIST_USELONG
+		elems[i].long_next = IVP_U_MINLIST_LONG_UNUSED;
+		elems[i].long_prev = IVP_U_MINLIST_UNUSED;
+#endif
 	}
 	
 	elems[malloced_size-1].next = IVP_U_MINLIST_UNUSED;
@@ -41,10 +48,20 @@ IVP_U_Min_List::~IVP_U_Min_List()
 IVP_U_MINLIST_INDEX IVP_U_Min_List::add(void *elem, IVP_U_MINLIST_FIXED_POINT value)
 {
 	// search free element first
-	IVP_ASSERT(value <= P_FLOAT_MAX);
+	IVP_ASSERT(elem != NULL);
+	if (elem == NULL)
+		return IVP_U_MINLIST_UNUSED;
+
+	// NaNs make every comparison false and used to index elems[65535] when
+	// inserted into an empty list. Keep invalid times inert instead.
+	if (value != value || value > IVP_U_MINLIST_MAXVALUE)
+		value = IVP_U_MINLIST_MAXVALUE;
+	else if (value < -IVP_U_MINLIST_MAXVALUE)
+		value = -IVP_U_MINLIST_MAXVALUE;
+	IVP_ASSERT(value <= IVP_U_MINLIST_MAXVALUE);
+
 	IVP_U_Min_List_Element *e;
 	IVP_U_MINLIST_INDEX return_index;
-	counter += 1;
 	
 	if ( free_list != IVP_U_MINLIST_UNUSED )
 	{
@@ -96,10 +113,20 @@ IVP_U_MINLIST_INDEX IVP_U_Min_List::add(void *elem, IVP_U_MINLIST_FIXED_POINT va
 		for(; i < malloced_size; i++)
 		{
 			elems[i].next = i+1;
+			elems[i].prev = IVP_U_MINLIST_UNUSED;
+			elems[i].element = NULL;
+			elems[i].value = IVP_U_MINLIST_MAXVALUE;
+#ifdef IVP_U_MINLIST_USELONG
+			elems[i].long_next = IVP_U_MINLIST_LONG_UNUSED;
+			elems[i].long_prev = IVP_U_MINLIST_UNUSED;
+#endif
 		}
 
 		elems[malloced_size-1].next = IVP_U_MINLIST_UNUSED;
     }
+
+	IVP_ASSERT(e->element == NULL);
+	counter += 1;
 	
 	e->element = elem;
 	e->value = value;
@@ -232,7 +259,9 @@ end:
 
 void IVP_U_Min_List::remove_minlist_elem(IVP_U_MINLIST_INDEX index)
 {
-	IVP_ASSERT( index < malloced_size );
+	IVP_ASSERT( index < malloced_size && elems[index].element != NULL );
+	if (index >= malloced_size || elems[index].element == NULL)
+		return;
 
 	IVP_U_Min_List_Element *e = & elems[index];
 	unsigned int prev = e->prev;
@@ -283,7 +312,16 @@ void IVP_U_Min_List::remove_minlist_elem(IVP_U_MINLIST_INDEX index)
 	}
 #endif
 
-    counter-=1;
+    IVP_ASSERT(counter > 0);
+    if (counter > 0)
+	counter-=1;
+    e->element = NULL;
+    e->value = IVP_U_MINLIST_MAXVALUE;
+    e->prev = IVP_U_MINLIST_UNUSED;
+#ifdef IVP_U_MINLIST_USELONG
+    e->long_next = IVP_U_MINLIST_LONG_UNUSED;
+    e->long_prev = IVP_U_MINLIST_UNUSED;
+#endif
     e->next = free_list;
     free_list = index;
 
