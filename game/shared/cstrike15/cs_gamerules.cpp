@@ -17820,12 +17820,22 @@ void CCSGameRules::InitializeGameTypeAndMode( void )
 #if defined( USE_MAC_PRESET ) && !defined( CLIENT_DLL )
 	if ( !engine->IsDedicatedServer() )
 	{
-		// Apply these after the deathmatch and map cfgs have executed.
+		// Apply the local instant-start preset after the deathmatch and map
+		// configs so it also governs the first spawn on a freshly loaded map.
 		mp_teammates_are_enemies.SetValue( 1 );
 		mp_respawn_on_death_t.SetValue( 1 );
 		mp_respawn_on_death_ct.SetValue( 1 );
 		mp_ct_default_secondary.SetValue( "weapon_usp_silencer" );
 		mp_t_default_secondary.SetValue( "weapon_usp_silencer" );
+		mp_force_assign_teams.SetValue( 1 );
+		mp_humanteam.SetValue( "CT" );
+		mp_do_warmup_period.SetValue( 0 );
+		mp_do_warmup_offine.SetValue( 0 );
+		mp_warmup_pausetimer.SetValue( 0 );
+		mp_freezetime.SetValue( 0 );
+		mp_round_restart_delay.SetValue( 0 );
+		mp_respawn_immunitytime.SetValue( 0 );
+		mp_spawnprotectiontime.SetValue( 0 );
 	}
 	mp_give_player_c4.SetValue( 0 );
 #endif
