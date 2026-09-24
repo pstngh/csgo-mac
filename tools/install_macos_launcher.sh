@@ -41,4 +41,9 @@ if [[ -e "$installed_bundle" ]]; then
 fi
 mv "$bundle" "$installed_bundle"
 xattr -cr "$installed_bundle"
+/usr/bin/codesign --force --deep --sign - "$installed_bundle"
+# File Provider can immediately restore FinderInfo after signing an app in Documents.
+# FinderInfo is not part of the signature, but codesign's strict verifier rejects it.
+xattr -d com.apple.FinderInfo "$installed_bundle" 2>/dev/null || true
+/usr/bin/codesign --verify --deep --strict "$installed_bundle"
 print "Installed $installed_bundle"
